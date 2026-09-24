@@ -71,16 +71,22 @@ async function loadMediaDetails(mediaId) {
     const isTv = idStr.toLowerCase().includes('tv') || idStr.toLowerCase().includes('series') || idStr.startsWith('s_');
     item = await TMDB.getDetails(idStr, isTv ? 'series' : 'movie');
   } else if (item && item.tmdbId && typeof TMDB !== 'undefined') {
-    // Enriquece item local com dados completos de elenco e trailer do TMDb
+    // Enriquece item local com dados completos do TMDb. A TMDB é a fonte de
+    // verdade pra elenco, trailer e onde assistir — nunca cai de volta pro
+    // dado cadastrado à mão localmente só porque a TMDB não confirmou nada,
+    // senão um trailer/streaming de exemplo (fictício) sobrevive escondido.
     const full = await TMDB.getDetails(item.tmdbId, item.type);
     if (full) {
       item = {
         ...item,
         cast: (full.cast && full.cast.length > 0) ? full.cast : item.cast,
-        trailerUrl: full.trailerUrl || item.trailerUrl,
-        whereToWatch: (full.whereToWatch && full.whereToWatch.length > 0) ? full.whereToWatch : item.whereToWatch,
+        trailerUrl: full.trailerUrl || '',
+        whereToWatch: full.whereToWatch || [],
         backdrop: item.backdrop || full.backdrop,
-        poster: item.poster || full.poster
+        poster: item.poster || full.poster,
+        releaseDateFull: full.releaseDateFull,
+        notReleasedYet: full.notReleasedYet,
+        inTheaters: full.inTheaters
       };
     }
   }
@@ -350,10 +356,13 @@ function renderDetailsUI(item, lang) {
   if (synopsisTitle) synopsisTitle.innerHTML = `<span>📖</span> ${typeof t === 'function' ? t('details_synopsis_title') : 'Sinopse Oficial'}`;
   if (synopsisEl) synopsisEl.textContent = currentDisplaySynopsis || (typeof t === 'function' ? t('hero_subtitle') : 'Sem sinopse disponível.');
 
-  // Trailer Oficial ou Trecho de Leitura
+  // Trailer Oficial ou Trecho de Leitura — sem trailer confirmado pela TMDB,
+  // a seção inteira some (nada de placeholder "Trailer não disponível").
+  const trailerBlock = document.getElementById('detailsMediaPreviewBlock');
   const trailerTitle = document.getElementById('titleTrailer');
   const trailerContainer = document.getElementById('detailsTrailerContainer');
   if (item.type === 'book') {
+    if (trailerBlock) trailerBlock.style.display = '';
     if (trailerTitle) trailerTitle.innerHTML = `<span>📑</span> ${typeof t === 'function' ? t('modal_sample') : 'Trecho de Leitura'}`;
     if (trailerContainer) {
       trailerContainer.innerHTML = `
@@ -363,6 +372,7 @@ function renderDetailsUI(item, lang) {
       `;
     }
   } else if (item.trailerUrl) {
+    if (trailerBlock) trailerBlock.style.display = '';
     // Extrai o ID do vídeo do YouTube
     const match = item.trailerUrl.match(/(?:embed\/|v=|vi\/|youtu\.be\/|\/v\/|watch\?v=|\&v=)([^#\&\?]*).*/);
     const videoId = (match && match[1] && match[1].length === 11) ? match[1] : null;
@@ -408,9 +418,8 @@ function renderDetailsUI(item, lang) {
       `;
     }
   } else {
-    if (trailerContainer) {
-      trailerContainer.innerHTML = `<span style="color: var(--text-muted);">Trailer não disponível no momento.</span>`;
-    }
+    if (trailerBlock) trailerBlock.style.display = 'none';
+    if (trailerContainer) trailerContainer.innerHTML = '';
   }
 
   // Elenco e Equipe
@@ -462,10 +471,27 @@ function renderDetailsUI(item, lang) {
     });
   }
 
+  // Comprar Ingresso — só para filmes realmente em cartaz agora (calculado
+  // a partir da data de lançamento real da TMDB, nunca por suposição).
+  const buyTicketBtn = document.getElementById('btnBuyTicket');
+  if (buyTicketBtn) {
+    if (item.type === 'movie' && item.inTheaters) {
+      buyTicketBtn.href = `https://www.ingresso.com/busca/resultado?q=${encodeURIComponent(item.title)}`;
+      buyTicketBtn.style.display = 'inline-flex';
+    } else {
+      buyTicketBtn.style.display = 'none';
+    }
+  }
+
   // Onde Assistir / Plataformas (Cards Clicáveis Premium com Link Direto)
+  // Obra ainda não lançada não tem onde assistir/ler de verdade, então a
+  // seção inteira some em vez de mostrar um chute.
+  const providersBlock = document.getElementById('detailsProvidersBlock');
+  if (providersBlock) providersBlock.style.display = item.notReleasedYet ? 'none' : '';
+
   const providersTitle = document.getElementById('titleProviders');
   const providersList = document.getElementById('detailsProvidersList');
-  if (providersTitle) {
+  if (!item.notReleasedYet && providersTitle) {
     providersTitle.innerHTML = item.type === 'book'
       ? `<span>📖</span> ${typeof t === 'function' ? t('details_where_to_read_title') : 'Onde Encontrar / Ler'}`
       : `<span>📺</span> ${typeof t === 'function' ? t('details_where_to_watch_title') : 'Onde Assistir / Ler'}`;
@@ -994,6 +1020,15 @@ function renderReviews(mediaId) {
   if (!container) return;
 
   const item = DetailsState.currentMedia || (typeof MEDIA_DATABASE !== 'undefined' ? MEDIA_DATABASE.find(m => m.id === mediaId) : null) || { id: mediaId, title: 'Esta Obra' };
+
+  // Obra ainda não lançada: some com a seção inteira (avaliações existentes
+  // + formulário de nova avaliação), não só filtra a lista.
+  const reviewsBlock = document.getElementById('detailsReviewsBlock');
+  if (reviewsBlock) reviewsBlock.style.display = item.notReleasedYet ? 'none' : '';
+  if (item.notReleasedYet) {
+    container.innerHTML = '';
+    return;
+  }
   const key = `cinebook_reviews_${mediaId}`;
   const userSavedReviews = JSON.parse(localStorage.getItem(key)) || [];
 

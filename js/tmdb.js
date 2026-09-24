@@ -646,22 +646,52 @@ class TMDbService {
       }
     });
 
-    base.whereToWatch = streamList.length > 0 ? streamList : [
-      { name: "Max", icon: "📺", type: "Streaming", logo: "https://image.tmdb.org/t/p/original/6uhKBfmtzFqOcLoul1Xm12E7Z06.jpg" },
-      { name: "Prime Video", icon: "📺", type: "Streaming", logo: "https://image.tmdb.org/t/p/original/emthp39XA2vAHQI9YjWhBqzPQzV.jpg" },
-      { name: "Apple TV", icon: "🍎", type: "Aluguel", logo: "https://image.tmdb.org/t/p/original/2E03q9ObNzVv7s0zCqIeQ4TjK0E.jpg" }
-    ];
+    // Nunca inventa plataforma de streaming. Se a TMDB não devolveu nenhuma
+    // opção real (comum para obras ainda não lançadas), a lista fica vazia e
+    // a interface trata isso como "ainda não anunciado" — não preenche com
+    // um chute de "Max / Prime Video / Apple TV" como acontecia antes.
+    base.whereToWatch = streamList;
 
     // 6. Trailer Oficial do YouTube
     const videos = raw.videos?.results || [];
     const trailer = videos.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser')) || videos[0];
-    if (trailer && trailer.key) {
-      base.trailerUrl = `https://www.youtube-nocookie.com/embed/${trailer.key}?rel=0&modestbranding=1&enablejsapi=1`;
-    }
+    base.trailerUrl = (trailer && trailer.key)
+      ? `https://www.youtube-nocookie.com/embed/${trailer.key}?rel=0&modestbranding=1&enablejsapi=1`
+      : '';
 
     // 7. Recomendações
     const recs = raw.recommendations?.results || [];
     base.recommendations = recs.slice(0, 3).map(r => this.formatItem(r, isTv ? 'series' : 'movie'));
+
+    // 8. Status de lançamento: ainda não lançado? já está em cartaz no cinema?
+    // Baseado no campo real "status" da TMDB e na data de lançamento — nunca
+    // em suposição. Usado para esconder avaliações, "onde assistir/ler" e
+    // trailer fictício de obras que não saíram ainda, e para mostrar a opção
+    // de comprar ingresso só quando o filme está mesmo em cartaz.
+    const releaseDateStr = raw.release_date || raw.first_air_date || null;
+    base.releaseDateFull = releaseDateStr || null;
+
+    const UPCOMING_STATUSES = ['Planned', 'In Production', 'Post Production', 'Rumored'];
+    let releaseDateObj = null;
+    if (releaseDateStr) {
+      const parsed = new Date(`${releaseDateStr}T00:00:00`);
+      if (!isNaN(parsed.getTime())) releaseDateObj = parsed;
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    base.notReleasedYet = UPCOMING_STATUSES.includes(raw.status) ||
+      (releaseDateObj !== null && releaseDateObj > today);
+
+    // "Em cartaz": só para filmes (não séries/livros), já lançados, dentro de
+    // uma janela recente de exibição em salas de cinema.
+    const DIAS_EM_CARTAZ = 60;
+    if (!isTv && !base.notReleasedYet && releaseDateObj !== null) {
+      const diffDias = Math.floor((today - releaseDateObj) / 86400000);
+      base.inTheaters = diffDias >= 0 && diffDias <= DIAS_EM_CARTAZ;
+    } else {
+      base.inTheaters = false;
+    }
 
     return base;
   }

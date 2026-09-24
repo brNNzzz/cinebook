@@ -161,6 +161,12 @@
               <span class="details-score-label" data-i18n="lbl_user_score">Avaliação do Público</span>
             </div>
 
+            <!-- Comprar Ingresso: só aparece para filmes realmente em cartaz agora -->
+            <a class="details-btn-action btn-ticket" id="btnBuyTicket" href="#" target="_blank"
+              rel="noopener noreferrer" style="display: none; text-decoration: none;">
+              <span>🎟️</span> <span data-i18n="action_buy_ticket">Comprar Ingresso</span>
+            </a>
+
             <!-- Botões de Watchlist -->
             <button class="details-btn-action" id="btnActionFavorite" data-status="favorite">
               <span>⭐</span> <span id="lblActionFavorite" data-i18n="watchlist_btn_favorite">Favorito</span>
@@ -195,8 +201,8 @@
           </p>
         </article>
 
-        <!-- Trailer Oficial / Trecho do Livro -->
-        <article class="details-card-block" id="detailsMediaPreviewBlock">
+        <!-- Trailer Oficial / Trecho do Livro (some inteira se não houver trailer confirmado) -->
+        <article class="details-card-block" id="detailsMediaPreviewBlock" style="display: none;">
           <h2 class="details-block-title" id="titleTrailer">
             <span>🎬</span> <span data-i18n="details_trailer_title">Trailer Oficial</span>
           </h2>
@@ -215,8 +221,8 @@
           </div>
         </article>
 
-        <!-- Avaliações e Críticas dos Usuários -->
-        <article class="details-card-block">
+        <!-- Avaliações e Críticas dos Usuários (some inteira se a obra ainda não foi lançada) -->
+        <article class="details-card-block" id="detailsReviewsBlock">
           <h2 class="details-block-title" id="titleReviews">
             <span>⭐</span> <span data-i18n="details_reviews_title">Avaliações & Críticas da Comunidade</span>
           </h2>
@@ -275,8 +281,8 @@
       <!-- Barra Lateral (Onde Assistir & Informações Técnicas) -->
       <aside class="details-sidebar-column">
 
-        <!-- Onde Assistir / Streaming -->
-        <div class="details-card-block">
+        <!-- Onde Assistir / Streaming (some inteira se a obra ainda não foi lançada) -->
+        <div class="details-card-block" id="detailsProvidersBlock">
           <h3 class="details-block-title" style="font-size: 1.15rem;" id="titleProviders">
             <span>📺</span> <span data-i18n="details_where_to_watch_title">Onde Assistir / Ler</span>
           </h3>

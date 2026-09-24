@@ -3307,6 +3307,12 @@ function generateProceduralReviewsForMedia(item) {
 function getCuratedReviewsForMedia(item) {
   if (!item) return [];
 
+  // Obras que ainda não foram lançadas não podem ter avaliações de quem já
+  // assistiu/leu — nem as "exclusivas" cadastradas aqui, nem as geradas
+  // automaticamente. A camada de UI também esconde a seção inteira, mas essa
+  // trava fica aqui como segunda barreira caso a função seja chamada direto.
+  if (item.notReleasedYet) return [];
+
   const id = String(item.id || '').toLowerCase();
   const tmdbId = String(item.tmdbId || '');
   const title = (item.title || '').toLowerCase();

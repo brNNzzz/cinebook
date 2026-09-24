@@ -442,9 +442,15 @@
               <button class="status-btn" data-status="favorite" data-i18n="watchlist_favorites">❤️ Favorito</button>
             </div>
           </div>
-          <button class="btn-secondary" id="modalRemoveWatchlistBtn" style="display: none;">
-            🗑️ Remover da Lista
-          </button>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <a class="btn-primary" id="modalBuyTicketBtn" href="#" target="_blank" rel="noopener noreferrer"
+              style="display: none; text-decoration: none; align-items: center;">
+              🎟️ Comprar Ingresso
+            </a>
+            <button class="btn-secondary" id="modalRemoveWatchlistBtn" style="display: none;">
+              🗑️ Remover da Lista
+            </button>
+          </div>
         </div>
 
         <!-- Sinopse -->
@@ -489,7 +495,7 @@
         </div>
 
         <!-- Avaliação da Comunidade e Comentários -->
-        <div class="modal-section">
+        <div class="modal-section" id="modalReviewsSection">
           <h3 class="modal-section-title">💬 <span data-i18n="modal_reviews">Avaliação & Anotações Pessoais</span></h3>
           <div class="review-form">
             <div class="star-rating" id="modalStarRating">

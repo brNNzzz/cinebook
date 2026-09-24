@@ -1685,11 +1685,25 @@ async function openModal(mediaId) {
 
   if (!item) return;
 
-  // Se for do TMDb e ainda não tiver os detalhes completos (trailer, elenco real, streaming)
-  if (typeof TMDB !== 'undefined' && item.tmdbId && (!item.cast || item.cast.length === 0 || !item.trailerUrl)) {
+  // Se for do TMDb e ainda não tiver os detalhes completos (trailer, elenco
+  // real, streaming) — ou se ainda não sabemos o status real de lançamento.
+  // Esse último caso é o que garante que TODA obra com tmdbId (inclusive as
+  // hardcoded localmente com elenco/trailer de exemplo) passe pelo menos uma
+  // vez pela TMDB antes de mostrar avaliação, trailer ou "onde assistir" —
+  // sem isso, dados de exemplo cadastrados à mão nunca eram corrigidos.
+  if (typeof TMDB !== 'undefined' && item.tmdbId && (
+    !item.cast || item.cast.length === 0 ||
+    typeof item.notReleasedYet === 'undefined'
+  )) {
     const fullDetails = await TMDB.getDetails(item.tmdbId, item.type);
     if (fullDetails) {
       Object.assign(item, fullDetails);
+      // A TMDB é a fonte de verdade pra estes três campos: nunca deixa um
+      // trailer, streaming ou elenco de exemplo cadastrado à mão sobreviver
+      // à checagem só porque a TMDB não confirmou nada (undefined não
+      // sobrescreve via Object.assign quando a chave nem existe no objeto).
+      item.trailerUrl = fullDetails.trailerUrl || '';
+      item.whereToWatch = fullDetails.whereToWatch || [];
     }
   }
 
@@ -1707,11 +1721,15 @@ async function openModal(mediaId) {
   const modalSynopsis = document.getElementById('modalSynopsis');
   const modalCastTitle = document.getElementById('modalCastTitle');
   const modalCastGrid = document.getElementById('modalCastGrid');
+  const modalProvidersSection = document.getElementById('modalProvidersSection');
   const modalProvidersTitle = document.getElementById('modalProvidersTitle');
   const modalProvidersList = document.getElementById('modalProvidersList');
+  const modalTrailerSection = document.getElementById('modalTrailerSection');
   const modalTrailerTitle = document.getElementById('modalTrailerTitle');
   const modalTrailerContainer = document.getElementById('modalTrailerContainer');
+  const modalReviewsSection = document.getElementById('modalReviewsSection');
   const modalRemoveWatchlistBtn = document.getElementById('modalRemoveWatchlistBtn');
+  const modalBuyTicketBtn = document.getElementById('modalBuyTicketBtn');
 
   const currentL = localStorage.getItem('cinebook_lang') || 'pt';
 
@@ -1778,20 +1796,44 @@ async function openModal(mediaId) {
     modalRemoveWatchlistBtn.style.display = 'none';
   }
 
-  // Onde Assistir / Ler
-  modalProvidersTitle.textContent = item.type === 'book'
-    ? (typeof t === 'function' ? `📖 ${t('modal_where_to_watch')}` : '📖 Onde Encontrar / Ler')
-    : (typeof t === 'function' ? `📺 ${t('modal_where_to_watch')}` : '📺 Onde Assistir');
-  modalProvidersList.innerHTML = '';
-  if (item.whereToWatch && item.whereToWatch.length > 0) {
-    item.whereToWatch.forEach(prov => {
-      const chip = document.createElement('div');
-      chip.className = 'provider-chip';
-      chip.innerHTML = `<span>${prov.icon}</span> <span>${prov.name}</span> <small style="color: var(--text-muted);">(${prov.type})</small>`;
-      modalProvidersList.appendChild(chip);
-    });
+  // Comprar Ingresso — só para filmes realmente em cartaz agora (calculado
+  // a partir da data de lançamento real da TMDB, nunca por suposição).
+  if (modalBuyTicketBtn) {
+    if (item.type === 'movie' && item.inTheaters) {
+      modalBuyTicketBtn.href = `https://www.ingresso.com/busca/resultado?q=${encodeURIComponent(item.title)}`;
+      modalBuyTicketBtn.style.display = 'inline-flex';
+    } else {
+      modalBuyTicketBtn.style.display = 'none';
+    }
+  }
+
+  // Onde Assistir / Ler — obra ainda não lançada não tem onde assistir/ler
+  // de verdade, então a seção inteira some em vez de mostrar um chute.
+  if (item.notReleasedYet) {
+    if (modalProvidersSection) modalProvidersSection.style.display = 'none';
   } else {
-    modalProvidersList.innerHTML = `<span style="color: var(--text-muted);">${typeof t === 'function' ? t('empty_results_desc') : 'Informações de disponibilidade não cadastradas.'}</span>`;
+    if (modalProvidersSection) modalProvidersSection.style.display = '';
+    modalProvidersTitle.textContent = item.type === 'book'
+      ? (typeof t === 'function' ? `📖 ${t('modal_where_to_watch')}` : '📖 Onde Encontrar / Ler')
+      : (typeof t === 'function' ? `📺 ${t('modal_where_to_watch')}` : '📺 Onde Assistir');
+    modalProvidersList.innerHTML = '';
+    if (item.whereToWatch && item.whereToWatch.length > 0) {
+      item.whereToWatch.forEach(prov => {
+        const chip = document.createElement('div');
+        chip.className = 'provider-chip';
+        chip.innerHTML = `<span>${prov.icon}</span> <span>${prov.name}</span> <small style="color: var(--text-muted);">(${prov.type})</small>`;
+        modalProvidersList.appendChild(chip);
+      });
+    } else {
+      modalProvidersList.innerHTML = `<span style="color: var(--text-muted);">${typeof t === 'function' ? t('empty_results_desc') : 'Informações de disponibilidade não cadastradas.'}</span>`;
+    }
+  }
+
+  // Avaliações — obra ainda não lançada não pode ter quem já assistiu/leu,
+  // então a seção inteira (avaliações existentes + formulário de nova
+  // avaliação) some, em vez de só filtrar a lista.
+  if (modalReviewsSection) {
+    modalReviewsSection.style.display = item.notReleasedYet ? 'none' : '';
   }
 
   // Elenco / Autor
@@ -1818,8 +1860,10 @@ async function openModal(mediaId) {
 
   loadRecommendations(item);
 
-  // Trailer / Trecho
+  // Trailer / Trecho — filme/série sem trailer real confirmado pela TMDB não
+  // mostra a seção (nada de placeholder tipo "Trailer indisponível").
   if (item.type === 'book') {
+    if (modalTrailerSection) modalTrailerSection.style.display = '';
     modalTrailerTitle.textContent = typeof t === 'function' ? `📑 ${t('modal_sample')}` : '📑 Trecho de Leitura';
     modalTrailerContainer.innerHTML = `
       <div style="background: rgba(255,255,255,0.04); padding: 1.25rem; border-radius: var(--radius-md); border-left: 3px solid var(--color-book); font-style: italic; color: #cbd5e1; line-height: 1.7;">
@@ -1827,6 +1871,7 @@ async function openModal(mediaId) {
       </div>
     `;
   } else if (item.trailerUrl) {
+    if (modalTrailerSection) modalTrailerSection.style.display = '';
     modalTrailerTitle.textContent = '🎬 Trailer Oficial';
     const match = item.trailerUrl.match(/(?:embed\/|v=|vi\/|youtu\.be\/|\/v\/|watch\?v=|\&v=)([^#\&\?]*).*/);
     const videoId = (match && match[1] && match[1].length === 11) ? match[1] : null;
@@ -1854,7 +1899,8 @@ async function openModal(mediaId) {
       </a>
     `;
   } else {
-    modalTrailerContainer.innerHTML = '<span style="color: var(--text-muted);">Trailer indisponível.</span>';
+    if (modalTrailerSection) modalTrailerSection.style.display = 'none';
+    modalTrailerContainer.innerHTML = '';
   }
 
   resetReviewForm();

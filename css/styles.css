@@ -2995,6 +2995,17 @@ body {
   border-color: var(--tmdb-light-green);
 }
 
+.details-btn-action.btn-ticket {
+  background: var(--tmdb-gradient);
+  color: #041018;
+  border-color: transparent;
+}
+
+.details-btn-action.btn-ticket:hover {
+  background: var(--tmdb-gradient-hover);
+  color: #041018;
+}
+
 /* Corpo Principal (Layout 2 Colunas) */
 .details-content-wrapper {
   max-width: var(--container-max);
