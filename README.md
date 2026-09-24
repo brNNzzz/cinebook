@@ -77,7 +77,7 @@ Para usar também o backend Python (API e banco SQLite): `python server.py`, dep
 
 ## Testes
 
-São mais de 160 verificações num navegador de verdade, cobrindo lançamentos, busca, carrossel, livros, avaliações, contas, estreias e modo offline. Nenhum teste acessa a internet: as APIs são simuladas.
+São 179 verificações num navegador de verdade, cobrindo lançamentos, busca, carrossel, livros, avaliações, contas, estreias e modo offline. Nenhum teste acessa a internet: as APIs são simuladas.
 
 ```bash
 cd tests
@@ -87,6 +87,10 @@ npm test
 ```
 
 Para rodar só um grupo: `npm test -- em-breve`. Os testes também rodam sozinhos no GitHub a cada push (aba **Actions**).
+
+## Relatório técnico
+
+Notas do Lighthouse (antes e depois), diagrama da arquitetura e resultado dos testes: [`docs/relatorio-tecnico.html`](docs/relatorio-tecnico.html). No site publicado, fica em `/docs/relatorio-tecnico.html`. Os números medidos estão em [`docs/lighthouse/resumo.json`](docs/lighthouse/resumo.json).
 
 ## Publicação
 

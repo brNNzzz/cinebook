@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relatório Técnico CineBook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #f5f6fa;
+    --surface: #ffffff;
+    --ink: #141a2c;
+    --muted: #515a74;
+    --line: #dce0eb;
+    --accent: #5a3fd4;
+    --accent-soft: #ece8fd;
+    --teal: #0d7f6c;
+    --good: #0a7a52;
+    --good-bg: #dff3e9;
+    --warn: #8f5a00;
+    --warn-bg: #fcefd2;
+    --bad: #b3312a;
+    --bad-bg: #fbe3e0;
+    --code-bg: #eef0f6;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #0b0f1d;
+      --surface: #131a2e;
+      --ink: #e8ebf5;
+      --muted: #9ba4be;
+      --line: #28324c;
+      --accent: #a896ff;
+      --accent-soft: #221c44;
+      --teal: #3fcfb4;
+      --good: #4fd9a1;
+      --good-bg: #0f2c22;
+      --warn: #f2b84b;
+      --warn-bg: #33270d;
+      --bad: #ff8277;
+      --bad-bg: #3a1815;
+      --code-bg: #182038;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #0b0f1d;
+    --surface: #131a2e;
+    --ink: #e8ebf5;
+    --muted: #9ba4be;
+    --line: #28324c;
+    --accent: #a896ff;
+    --accent-soft: #221c44;
+    --teal: #3fcfb4;
+    --good: #4fd9a1;
+    --good-bg: #0f2c22;
+    --warn: #f2b84b;
+    --warn-bg: #33270d;
+    --bad: #ff8277;
+    --bad-bg: #3a1815;
+    --code-bg: #182038;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 16px/1.6 var(--body);
+    padding-inline: 20px;
+    padding-block: 0 64px;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .prose { max-width: 68ch; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(2.1rem, 5vw, 3.2rem); letter-spacing: -0.02em; }
+  h2 { font-size: 1.7rem; letter-spacing: -0.01em; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0; }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  code, .mono { font-family: var(--mono); font-size: 0.88em; }
+  code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+
+  /* Cabeçalho */
+  .masthead { padding-block: 56px 36px; display: grid; gap: 18px; border-bottom: 1px solid var(--line); }
+  .eyebrow { font: 500 0.78rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+  .lede { font-size: 1.12rem; color: var(--muted); max-width: 62ch; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 22px; font: 400 0.85rem/1.4 var(--mono); color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  /* Números principais */
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-block: 36px 8px; }
+  .stat { background: var(--surface); padding: 20px 20px 18px; display: grid; gap: 6px; align-content: start; }
+  .stat .big { font: 700 2.6rem/1 var(--display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .stat .big small { font-size: 1rem; color: var(--muted); font-weight: 600; margin-left: 2px; }
+  .stat .lbl { font-weight: 600; font-size: 0.95rem; }
+  .stat .sub { font-size: 0.84rem; color: var(--muted); line-height: 1.45; }
+  .big.good { color: var(--good); }
+
+  section { padding-block: 44px 8px; display: grid; gap: 18px; }
+  .sec-head { display: grid; gap: 6px; }
+  .sec-num { font: 500 0.78rem/1 var(--mono); color: var(--muted); letter-spacing: 0.08em; }
+
+  /* Tabelas */
+  .table-scroll { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child > * { border-bottom: 0; }
+  thead th { font: 600 0.74rem/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--code-bg); white-space: nowrap; vertical-align: bottom; }
+  tbody th { font-weight: 600; white-space: nowrap; }
+  td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .scores td, .scores th { vertical-align: middle; padding-inline: 10px; }
+  .fixes { min-width: 760px; }
+
+  .score { display: inline-grid; place-items: center; min-width: 2.35em; height: 2.35em; padding: 0 0.3em; border-radius: 999px; font: 600 0.9rem/1 var(--mono); font-variant-numeric: tabular-nums; border: 2px solid currentColor; }
+  .score.sm { min-width: 2em; height: 2em; font-size: 0.78rem; border-width: 1px; opacity: 0.8; }
+  .score.good { color: var(--good); background: var(--good-bg); }
+  .score.warn { color: var(--warn); background: var(--warn-bg); }
+  .score.bad { color: var(--bad); background: var(--bad-bg); }
+  .cls { font-family: var(--mono); font-size: 0.85rem; padding: 2px 6px; border-radius: 5px; }
+  .cls.good { color: var(--good); background: var(--good-bg); }
+  .cls.warn { color: var(--warn); background: var(--warn-bg); }
+  .cls.bad { color: var(--bad); background: var(--bad-bg); }
+  .arr { color: var(--muted); margin: 0 6px; font-size: 0.85rem; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 0.84rem; color: var(--muted); align-items: center; }
+  .legend span.score { margin-right: 6px; }
+  .note { font-size: 0.9rem; color: var(--muted); max-width: 78ch; }
+  .callout { background: var(--accent-soft); border-radius: 12px; padding: 16px 18px; font-size: 0.95rem; max-width: 78ch; }
+  .callout b { color: var(--ink); }
+
+  .how { display: inline-block; font: 500 0.72rem/1.2 var(--mono); padding: 3px 7px; border-radius: 5px; background: var(--code-bg); color: var(--muted); white-space: nowrap; }
+  .fixes td { font-size: 0.9rem; }
+  .fixes td:first-child { font-weight: 600; min-width: 14ch; }
+
+  /* Diagrama */
+  .diagram { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 12px; }
+  .diagram svg { display: block; width: 100%; min-width: 780px; height: auto; font-family: var(--body); }
+  .d-col { fill: var(--paper); stroke: var(--line); stroke-width: 1.2; }
+  .d-box { fill: var(--surface); stroke: var(--line); stroke-width: 1.2; }
+  .d-box.accent { stroke: var(--accent); }
+  .d-box.teal { stroke: var(--teal); }
+  .d-box.dashed { stroke-dasharray: 5 4; }
+  .d-col-title { fill: var(--muted); font: 600 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+  .d-title { fill: var(--ink); font-weight: 600; font-size: 14px; }
+  .d-text { fill: var(--muted); font-size: 12px; }
+  .d-code { fill: var(--accent); font: 500 12px var(--mono); }
+  .d-line { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+  .d-line.dashed { stroke-dasharray: 5 4; }
+  .d-line.teal { stroke: var(--teal); }
+  .d-head { fill: var(--muted); }
+  .d-head.teal { fill: var(--teal); }
+  .d-label { fill: var(--muted); font: 500 11px var(--mono); }
+  .d-label-bg { fill: var(--surface); }
+
+  .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 22px; }
+  .mod { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline; padding-block: 8px; border-top: 1px solid var(--line); font-size: 0.9rem; }
+  .mod code { background: none; padding: 0; color: var(--accent); }
+  .mod .kb { grid-column: 1 / -1; color: var(--muted); font-size: 0.82rem; }
+
+  pre { margin: 0; background: var(--code-bg); border-radius: 12px; padding: 16px 18px; overflow-x: auto; font: 400 0.82rem/1.55 var(--mono); color: var(--ink); }
+  pre .ok { color: var(--good); }
+  pre .dim { color: var(--muted); }
+
+  .badge-demo { display: inline-flex; font: 500 11px/1 var(--mono); border-radius: 4px; overflow: hidden; vertical-align: middle; }
+  .badge-demo span { padding: 5px 7px; }
+  .badge-demo span:first-child { background: #555; color: #fff; }
+  .badge-demo span:last-child { background: #3fb950; color: #0b1a10; }
+
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  ol.steps, ul.plain { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; max-width: 72ch; }
+  footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 0.84rem; color: var(--muted); }
+
+  @media (max-width: 760px) {
+    body { padding-inline: 16px; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .two { grid-template-columns: minmax(0, 1fr); }
+    .masthead { padding-block: 36px 28px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+
+<header class="masthead">
+  <div class="eyebrow">Relatório técnico · CineBook v3</div>
+  <h1>Qualidade medida: desempenho, acessibilidade e testes do CineBook</h1>
+  <p class="lede">Este relatório mostra como o CineBook foi auditado com o Lighthouse do Google, como o sistema está organizado e como os testes automáticos verificam o site a cada alteração no código.</p>
+  <div class="meta">
+    <span>Data <b>24/09/2026</b></span>
+    <span>Versão <b>commit 1c9b9d9</b></span>
+    <span>Site <b><a href="https://cinebooksv3.netlify.app">cinebooksv3.netlify.app</a></b></span>
+  </div>
+</header>
+
+<div class="stats" role="list">
+  <div class="stat" role="listitem">
+    <div class="big good">100<small>/100</small></div>
+    <div class="lbl">Acessibilidade</div>
+    <div class="sub">Nas 7 páginas, no celular e no computador. Antes a média era 94.</div>
+  </div>
+  <div class="stat" role="listitem">
+    <div class="big good">100<small>/100</small></div>
+    <div class="lbl">SEO</div>
+    <div class="sub">Títulos, descrições, idioma e links rastreáveis em todas as páginas.</div>
+  </div>
+  <div class="stat" role="listitem">
+    <div class="big good">96<small>/100</small></div>
+    <div class="lbl">Desempenho no celular</div>
+    <div class="sub">Média das 7 páginas com compressão, como o Netlify entrega. Antes: 79.</div>
+  </div>
+  <div class="stat" role="listitem">
+    <div class="big">179</div>
+    <div class="lbl">Verificações automáticas</div>
+    <div class="sub">Em 12 grupos, num navegador de verdade. Nenhuma falha.</div>
+  </div>
+</div>
+
+<section id="lighthouse">
+  <div class="sec-head">
+    <div class="sec-num">1 · LIGHTHOUSE</div>
+    <h2>Notas do Lighthouse</h2>
+  </div>
+  <div class="prose">
+    <p>O Lighthouse é a ferramenta do Google que dá nota de 0 a 100 a uma página em quatro áreas: desempenho, acessibilidade, boas práticas e SEO. Rodamos o Lighthouse 12.8.2 nas 7 páginas do site, primeiro no estado em que estavam e depois das correções descritas na seção 2. No modo celular, o Lighthouse simula um aparelho intermediário numa rede 4G lenta, que é o cenário mais exigente.</p>
+  </div>
+  <div class="legend">
+    <span><span class="score good sm">90</span>90 a 100: bom</span>
+    <span><span class="score warn sm">50</span>50 a 89: precisa melhorar</span>
+    <span><span class="score bad sm">0</span>0 a 49: ruim</span>
+    <span>CLS (quanto a tela "pula" ao carregar): bom é até 0,1</span>
+  </div>
+
+  <h3>Celular</h3>
+  <div class="table-scroll">
+    <table class="scores">
+      <thead>
+        <tr><th scope="col">Página</th><th scope="col">Desempenho<br>antes → depois → publicado</th><th scope="col">Acessibilidade<br>antes → depois</th><th scope="col">Boas<br>práticas</th><th scope="col">SEO</th><th scope="col">CLS<br>antes → publicado</th><th scope="col">LCP<br>antes → publicado</th></tr>
+      </thead>
+      <tbody>
+<tr><th scope="row">Início (catálogo)</th>
+<td class="num"><span class="score warn sm">75</span><span class="arr" aria-hidden="true">→</span><span class="score warn sm">76</span><span class="arr" aria-hidden="true">→</span><span class="score good">90</span></td>
+<td class="num"><span class="score good sm">94</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,006</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,001</span></td>
+<td class="num mono">7,2&nbsp;s<span class="arr" aria-hidden="true">→</span>3,6&nbsp;s</td></tr>
+<tr><th scope="row">Detalhes de filme</th>
+<td class="num"><span class="score warn sm">64</span><span class="arr" aria-hidden="true">→</span><span class="score warn sm">78</span><span class="arr" aria-hidden="true">→</span><span class="score good">94</span></td>
+<td class="num"><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls warn">0,226</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,011</span></td>
+<td class="num mono">6,8&nbsp;s<span class="arr" aria-hidden="true">→</span>3,0&nbsp;s</td></tr>
+<tr><th scope="row">Detalhes de livro</th>
+<td class="num"><span class="score warn sm">75</span><span class="arr" aria-hidden="true">→</span><span class="score warn sm">79</span><span class="arr" aria-hidden="true">→</span><span class="score good">95</span></td>
+<td class="num"><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,090</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,006</span></td>
+<td class="num mono">6,1&nbsp;s<span class="arr" aria-hidden="true">→</span>2,8&nbsp;s</td></tr>
+<tr><th scope="row">Em breve</th>
+<td class="num"><span class="score warn sm">79</span><span class="arr" aria-hidden="true">→</span><span class="score good sm">96</span><span class="arr" aria-hidden="true">→</span><span class="score good">99</span></td>
+<td class="num"><span class="score good sm">94</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls warn">0,102</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,009</span></td>
+<td class="num mono">4,8&nbsp;s<span class="arr" aria-hidden="true">→</span>2,0&nbsp;s</td></tr>
+<tr><th scope="row">Entrar</th>
+<td class="num"><span class="score warn sm">85</span><span class="arr" aria-hidden="true">→</span><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">99</span></td>
+<td class="num"><span class="score good sm">100</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,000</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td>
+<td class="num mono">4,1&nbsp;s<span class="arr" aria-hidden="true">→</span>2,0&nbsp;s</td></tr>
+<tr><th scope="row">Criar conta</th>
+<td class="num"><span class="score warn sm">85</span><span class="arr" aria-hidden="true">→</span><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">99</span></td>
+<td class="num"><span class="score good sm">96</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,011</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,011</span></td>
+<td class="num mono">4,1&nbsp;s<span class="arr" aria-hidden="true">→</span>2,0&nbsp;s</td></tr>
+<tr><th scope="row">Institucional</th>
+<td class="num"><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good sm">96</span><span class="arr" aria-hidden="true">→</span><span class="score good">99</span></td>
+<td class="num"><span class="score good sm">95</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,010</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td>
+<td class="num mono">3,4&nbsp;s<span class="arr" aria-hidden="true">→</span>1,6&nbsp;s</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note"><b>Antes</b> e <b>depois</b> foram medidos nas mesmas condições: servidor local simples, sem compressão. LCP é o tempo até aparecer o maior elemento da tela. <b>Publicado</b> usa um servidor local que comprime os arquivos (gzip) e define cache, como o Netlify faz no site no ar. A compressão reduz em cerca de 80% o tamanho de HTML, CSS e JavaScript, e é o que mais pesa no desempenho do celular.</p>
+
+  <h3>Computador</h3>
+  <div class="table-scroll">
+    <table class="scores">
+      <thead>
+        <tr><th scope="col">Página</th><th scope="col">Desempenho<br>antes → depois</th><th scope="col">Acessibilidade<br>antes → depois</th><th scope="col">Boas<br>práticas</th><th scope="col">SEO</th><th scope="col">CLS<br>antes → depois</th></tr>
+      </thead>
+      <tbody>
+<tr><th scope="row">Início (catálogo)</th>
+<td class="num"><span class="score warn sm">81</span><span class="arr" aria-hidden="true">→</span><span class="score good">95</span></td>
+<td class="num"><span class="score good sm">94</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls warn">0,244</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+<tr><th scope="row">Detalhes de filme</th>
+<td class="num"><span class="score warn sm">89</span><span class="arr" aria-hidden="true">→</span><span class="score good">97</span></td>
+<td class="num"><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls warn">0,181</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+<tr><th scope="row">Detalhes de livro</th>
+<td class="num"><span class="score good sm">96</span><span class="arr" aria-hidden="true">→</span><span class="score good">98</span></td>
+<td class="num"><span class="score good sm">91</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,058</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+<tr><th scope="row">Em breve</th>
+<td class="num"><span class="score good sm">97</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good sm">94</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">96</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,096</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+<tr><th scope="row">Entrar</th>
+<td class="num"><span class="score good sm">99</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good sm">100</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,000</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+<tr><th scope="row">Criar conta</th>
+<td class="num"><span class="score good sm">99</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good sm">96</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,001</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,001</span></td></tr>
+<tr><th scope="row">Institucional</th>
+<td class="num"><span class="score good sm">100</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good sm">95</span><span class="arr" aria-hidden="true">→</span><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="score good">100</span></td>
+<td class="num"><span class="cls good">0,005</span><span class="arr" aria-hidden="true">→</span><span class="cls good">0,000</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout"><b>Por que "Boas práticas" fica em 96 em quatro páginas?</b> Na medição local não existe o proxy <code>/tmdb-api</code>, que só funciona dentro do Netlify. O navegador registra um erro 404 no console e o Lighthouse desconta 4 pontos. No site publicado o proxy responde normalmente. Para as notas não dependerem da internet, as medições bloquearam as APIs externas (TMDB, Google Books, Open Library): as páginas usam o catálogo local de destaques.</div>
+</section>
+
+<section id="correcoes">
+  <div class="sec-head">
+    <div class="sec-num">2 · CORREÇÕES</div>
+    <h2>Problemas encontrados e corrigidos</h2>
+  </div>
+  <p class="prose">Cada linha é um defeito real, com a forma como foi descoberto. Os que vieram de testes automáticos ou do Lighthouse continuam sendo verificados a cada alteração no código, para não voltarem.</p>
+  <div class="table-scroll">
+    <table class="fixes">
+      <thead><tr><th scope="col">Problema</th><th scope="col">Como apareceu</th><th scope="col">Correção</th><th scope="col">Resultado</th></tr></thead>
+      <tbody>
+        <tr><td>Página inicial travava</td><td><span class="how">Lighthouse</span></td><td>Quando o pôster do destaque não carregava, a imagem reserva também falhava e o código tentava de novo sem parar. Agora a troca acontece uma única vez.</td><td>O Lighthouse deixou de acusar "a página parou de responder".</td></tr>
+        <tr><td>Botão de concluir o cadastro escondido</td><td><span class="how">Relato de uso</span> <span class="how">Teste</span></td><td>A página de cadastro tinha altura presa ao tamanho da tela e rolagem desligada. A página agora rola, e o botão fica fixo no rodapé do formulário.</td><td>Cadastro concluído em notebook de 1366×657, 1280×600 e celular de 360×640 sem tirar zoom.</td></tr>
+        <tr><td>Conteúdo cortado no celular</td><td><span class="how">Relato de uso</span> <span class="how">Teste</span></td><td>A coluna da página de detalhes crescia até 640&nbsp;px numa tela de 360&nbsp;px. As grades passaram a usar <code>minmax(0, 1fr)</code> e o menu quebra linha.</td><td>9 páginas sem nada passando da tela em 320, 360, 390 e 768&nbsp;px.</td></tr>
+        <tr><td>Zoom bloqueado</td><td><span class="how">Teste</span></td><td>As páginas proibiam o gesto de pinça (<code>user-scalable=no</code>), o que atrapalha quem enxerga pouco.</td><td>Zoom liberado em todas as páginas.</td></tr>
+        <tr><td>Texto secundário com pouco contraste</td><td><span class="how">Lighthouse</span></td><td>O cinza <code>#64748b</code> sobre o fundo escuro ficava abaixo da regra de contraste 4,5:1 (WCAG AA). Trocado por <code>#8391a7</code>.</td><td>Acessibilidade 100.</td></tr>
+        <tr><td>Janelas fechadas recebiam foco</td><td><span class="how">Lighthouse</span> <span class="how">Teste</span></td><td>Quem navega pelo teclado caía em botões de janelas invisíveis. Janelas fechadas agora ficam inertes (<code>inert</code>).</td><td>Acessibilidade 100.</td></tr>
+        <tr><td>Títulos fora de ordem</td><td><span class="how">Lighthouse</span></td><td>O rodapé e as recomendações pulavam níveis de título, o que confunde leitores de tela.</td><td>Hierarquia de títulos contínua.</td></tr>
+        <tr><td>Tela "pulando" ao carregar</td><td><span class="how">Lighthouse</span> <span class="how">Teste</span></td><td>Cabeçalho, carrossel, barra de categorias, botão "carregar mais" e os dados da obra mudavam de tamanho depois de aparecer. O espaço de cada um agora é reservado desde o início.</td><td>CLS dos detalhes no computador: 0,474 → 0.</td></tr>
+        <tr><td>Logotipo pesado</td><td><span class="how">Lighthouse</span></td><td>Um PNG de 1024×1024 (164&nbsp;KB) era exibido com 36&nbsp;px. Criada uma versão de 96×96.</td><td>164&nbsp;KB → 9&nbsp;KB em todas as páginas.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="arquitetura">
+  <div class="sec-head">
+    <div class="sec-num">3 · ARQUITETURA</div>
+    <h2>Como o sistema está organizado</h2>
+  </div>
+  <p class="prose">O CineBook é um aplicativo web progressivo (PWA) feito com HTML, CSS e JavaScript puro, sem framework. Todo o código roda no navegador. O Netlify entrega os arquivos e repassa as chamadas às APIs pelo próprio domínio do site, o que evita bloqueios de rede e de CORS.</p>
+
+  <div class="diagram" role="img" aria-labelledby="diag-title diag-desc">
+    <svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg">
+      <title id="diag-title">Diagrama da arquitetura do CineBook</title>
+      <desc id="diag-desc">O navegador carrega as páginas do Netlify. Os módulos JavaScript pedem dados aos proxies do Netlify, que repassam para TMDB, Google Books e Open Library. As imagens vêm direto dos CDNs. O service worker guarda cópias para o modo offline e o armazenamento local guarda conta, lista e avaliações. No desenvolvimento, cada push no GitHub dispara os testes no GitHub Actions e a publicação no Netlify.</desc>
+      <defs>
+        <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head" d="M0,0 L10,5 L0,10 z"/></marker>
+        <marker id="aht" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="d-head teal" d="M0,0 L10,5 L0,10 z"/></marker>
+      </defs>
+
+      <!-- Coluna 1: navegador -->
+      <rect class="d-col" x="10" y="10" width="320" height="440" rx="14"/>
+      <text class="d-col-title" x="28" y="36">Navegador · celular ou computador</text>
+      <rect class="d-box accent" x="26" y="50" width="288" height="66" rx="10"/>
+      <text class="d-title" x="42" y="74">7 páginas HTML</text>
+      <text class="d-text" x="42" y="94">catálogo · detalhes · em breve · entrar</text>
+      <text class="d-text" x="42" y="109">criar conta · perfil · institucional</text>
+      <rect class="d-box accent" x="26" y="128" width="288" height="96" rx="10"/>
+      <text class="d-title" x="42" y="152">Módulos JavaScript</text>
+      <text class="d-code" x="42" y="174">app · details · tmdb · books</text>
+      <text class="d-code" x="42" y="192">reviews · upcoming · auth</text>
+      <text class="d-code" x="42" y="210">i18n (11 idiomas) · pwa</text>
+      <rect class="d-box" x="26" y="236" width="288" height="80" rx="10"/>
+      <text class="d-title" x="42" y="260">Service worker</text>
+      <text class="d-text" x="42" y="280">guarda páginas e dados para o modo offline</text>
+      <text class="d-text" x="42" y="296">e instala versões novas sozinho</text>
+      <rect class="d-box" x="26" y="328" width="288" height="106" rx="10"/>
+      <text class="d-title" x="42" y="352">Armazenamento local</text>
+      <text class="d-text" x="42" y="372">conta com senha em hash PBKDF2-SHA256</text>
+      <text class="d-text" x="42" y="388">lista pessoal e gostos</text>
+      <text class="d-text" x="42" y="404">avaliações dos usuários</text>
+      <text class="d-text" x="42" y="420">cópias das respostas das APIs</text>
+
+      <!-- Coluna 2: Netlify -->
+      <rect class="d-col" x="380" y="10" width="230" height="340" rx="14"/>
+      <text class="d-col-title" x="398" y="36">Netlify</text>
+      <rect class="d-box" x="396" y="50" width="198" height="80" rx="10"/>
+      <text class="d-title" x="412" y="74">Site estático</text>
+      <text class="d-text" x="412" y="94">HTTPS, CDN e compressão</text>
+      <text class="d-text" x="412" y="110">cache e cabeçalhos</text>
+      <rect class="d-box accent" x="396" y="142" width="198" height="108" rx="10"/>
+      <text class="d-title" x="412" y="166">Proxies das APIs</text>
+      <text class="d-code" x="412" y="190">/tmdb-api</text>
+      <text class="d-code" x="412" y="210">/gbooks-api</text>
+      <text class="d-code" x="412" y="230">/olib-api</text>
+      <rect class="d-box" x="396" y="262" width="198" height="72" rx="10"/>
+      <text class="d-title" x="412" y="286">Arquivos internos</text>
+      <text class="d-text" x="412" y="306">banco, backend e testes</text>
+      <text class="d-text" x="412" y="322">respondem 404</text>
+
+      <!-- Coluna 3: fontes de dados -->
+      <rect class="d-col" x="660" y="10" width="290" height="440" rx="14"/>
+      <text class="d-col-title" x="678" y="36">Fontes de dados públicas</text>
+      <rect class="d-box" x="676" y="50" width="258" height="82" rx="10"/>
+      <text class="d-title" x="692" y="74">TMDB</text>
+      <text class="d-text" x="692" y="94">filmes, séries, elenco, trailers,</text>
+      <text class="d-text" x="692" y="110">estreias no Brasil e avaliações</text>
+      <text class="d-text" x="692" y="126">onde assistir (dados do JustWatch)</text>
+      <rect class="d-box" x="676" y="144" width="258" height="62" rx="10"/>
+      <text class="d-title" x="692" y="168">Google Books</text>
+      <text class="d-text" x="692" y="188">livros, autores, sinopse, amostra</text>
+      <rect class="d-box" x="676" y="218" width="258" height="72" rx="10"/>
+      <text class="d-title" x="692" y="242">Open Library</text>
+      <text class="d-text" x="692" y="262">reserva automática quando o</text>
+      <text class="d-text" x="692" y="278">Google Books recusa pedidos</text>
+      <rect class="d-box dashed" x="676" y="366" width="258" height="68" rx="10"/>
+      <text class="d-title" x="692" y="390">CDNs de imagens</text>
+      <text class="d-text" x="692" y="410">pôsteres, fotos e capas vão direto</text>
+      <text class="d-text" x="692" y="426">do TMDB e da Open Library</text>
+
+      <!-- Setas de dados -->
+      <path class="d-line" d="M396,90 L322,90" marker-end="url(#ah)"/>
+      <rect class="d-label-bg" x="338" y="66" width="40" height="15" rx="3"/>
+      <text class="d-label" x="342" y="77">HTML</text>
+      <path class="d-line" d="M314,176 L388,196" marker-end="url(#ah)"/>
+      <rect class="d-label-bg" x="330" y="160" width="42" height="15" rx="3"/>
+      <text class="d-label" x="334" y="171">fetch</text>
+      <path class="d-line" d="M594,186 L668,96" marker-end="url(#ah)"/>
+      <path class="d-line" d="M594,206 L668,176" marker-end="url(#ah)"/>
+      <path class="d-line" d="M594,226 L668,254" marker-end="url(#ah)"/>
+      <path class="d-line dashed" d="M314,400 L668,400" marker-end="url(#ah)"/>
+      <rect class="d-label-bg" x="420" y="384" width="118" height="15" rx="3"/>
+      <text class="d-label" x="424" y="395">imagens (&lt;img&gt;)</text>
+
+      <!-- Desenvolvimento -->
+      <text class="d-col-title" x="28" y="498">Desenvolvimento e publicação</text>
+      <rect class="d-box" x="26" y="514" width="180" height="70" rx="10"/>
+      <text class="d-title" x="42" y="540">Código</text>
+      <text class="d-text" x="42" y="560">commit e push</text>
+      <rect class="d-box" x="256" y="514" width="150" height="70" rx="10"/>
+      <text class="d-title" x="272" y="540">GitHub</text>
+      <text class="d-text" x="272" y="560">repositório</text>
+      <rect class="d-box teal" x="456" y="494" width="244" height="58" rx="10"/>
+      <text class="d-title" x="472" y="518">GitHub Actions</text>
+      <text class="d-text" x="472" y="538">179 verificações no Chromium</text>
+      <rect class="d-box teal" x="456" y="566" width="244" height="58" rx="10"/>
+      <text class="d-title" x="472" y="590">Netlify</text>
+      <text class="d-text" x="472" y="610">publica a nova versão do site</text>
+      <path class="d-line" d="M206,549 L248,549" marker-end="url(#ah)"/>
+      <path class="d-line teal" d="M406,540 L448,524" marker-end="url(#aht)"/>
+      <path class="d-line teal" d="M406,558 L448,594" marker-end="url(#aht)"/>
+      <rect class="d-box dashed" x="740" y="514" width="194" height="92" rx="10"/>
+      <text class="d-title" x="756" y="540">Backend opcional</text>
+      <text class="d-text" x="756" y="560">Python + SQLite</text>
+      <text class="d-text" x="756" y="576">API e banco de contas para</text>
+      <text class="d-text" x="756" y="592">rodar no computador</text>
+    </svg>
+  </div>
+
+  <div class="two">
+    <div class="prose" style="display:grid; gap:12px">
+      <h3>Decisões de projeto</h3>
+      <p><b>Sem framework.</b> O site carrega só o que usa e roda em qualquer hospedagem estática. O preço é mais código escrito à mão para montar a interface.</p>
+      <p><b>Dados reais, nada inventado.</b> Nota, avaliações, "onde assistir" e trailer só aparecem quando a fonte oficial confirma. Filme que ainda não estreou mostra a data de estreia no Brasil em vez de nota.</p>
+      <p><b>Reserva para cada serviço.</b> Se o Google Books recusar pedidos, a busca de livros passa para a Open Library. Se o proxy do TMDB falhar, o site tenta a API direto. Sem internet, o service worker entrega a última cópia.</p>
+      <p><b>Senhas nunca guardadas em texto.</b> A senha vira um hash PBKDF2-SHA256 com 600 mil iterações e sal próprio, pela Web Crypto API do navegador. Depois de várias tentativas erradas, o login fica bloqueado por um minuto.</p>
+    </div>
+    <div>
+      <h3 style="margin-bottom:10px">Módulos principais</h3>
+      <div class="modules" style="grid-template-columns: minmax(0,1fr)">
+        <div class="mod"><code>app.js</code><span>catálogo, busca, carrossel e filtros</span><span class="kb">2.773 linhas · 31 KB comprimido</span></div>
+        <div class="mod"><code>details.js</code><span>página de cada obra</span><span class="kb">1.254 linhas · 18 KB</span></div>
+        <div class="mod"><code>tmdb.js</code><span>cliente da API do TMDB</span><span class="kb">909 linhas · 12 KB</span></div>
+        <div class="mod"><code>books.js</code><span>Google Books e Open Library</span><span class="kb">915 linhas · 12 KB</span></div>
+        <div class="mod"><code>auth.js</code><span>contas e senhas</span><span class="kb">436 linhas · 4 KB</span></div>
+        <div class="mod"><code>i18n.js</code><span>traduções em 11 idiomas</span><span class="kb">2.924 linhas · 42 KB</span></div>
+        <div class="mod"><code>sw.js</code><span>service worker</span><span class="kb">405 linhas · 4 KB</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="testes">
+  <div class="sec-head">
+    <div class="sec-num">4 · TESTES</div>
+    <h2>Testes automáticos e integração contínua</h2>
+  </div>
+  <p class="prose">Os testes abrem o site num Chromium de verdade com o Playwright, clicam, digitam e rolam a tela como uma pessoa faria, e conferem o resultado. As APIs externas são simuladas, então os testes dão o mesmo resultado com ou sem internet e não gastam a cota das APIs.</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th scope="col">Grupo</th><th scope="col">O que confere</th><th scope="col" style="text-align:right">Verificações</th></tr></thead>
+      <tbody>
+        <tr><th scope="row"><code>contas-e-senhas</code></th><td>hash das senhas, bloqueio após erros, migração de senhas antigas, redirecionamento seguro após o login</td><td class="num" style="text-align:right">26</td></tr>
+        <tr><th scope="row"><code>livros-google-books</code></th><td>busca de livros, capas, autores e página de detalhes</td><td class="num" style="text-align:right">28</td></tr>
+        <tr><th scope="row"><code>nao-lancados-e-busca</code></th><td>filmes não lançados sem nota nem "onde assistir"; busca por qualquer título</td><td class="num" style="text-align:right">23</td></tr>
+        <tr><th scope="row"><code>layout-celular</code></th><td>nada cortado de 320 a 768&nbsp;px, cadastro concluível, zoom liberado, CLS abaixo de 0,1, janelas fechadas inertes</td><td class="num" style="text-align:right">18</td></tr>
+        <tr><th scope="row"><code>em-breve</code></th><td>calendário de estreias, datas brasileiras, Google Agenda e arquivo .ics</td><td class="num" style="text-align:right">16</td></tr>
+        <tr><th scope="row"><code>livros-open-library</code></th><td>troca automática para a Open Library quando o Google recusa</td><td class="num" style="text-align:right">15</td></tr>
+        <tr><th scope="row"><code>status-lancamento-modal</code></th><td>janela rápida: ingresso para filmes em cartaz, sem trailer inventado</td><td class="num" style="text-align:right">15</td></tr>
+        <tr><th scope="row"><code>avaliacoes-reais</code></th><td>avaliações do TMDB e dos usuários, nenhuma gerada</td><td class="num" style="text-align:right">13</td></tr>
+        <tr><th scope="row"><code>status-lancamento-detalhes</code></th><td>as mesmas regras de lançamento na página de detalhes</td><td class="num" style="text-align:right">12</td></tr>
+        <tr><th scope="row"><code>carrossel</code></th><td>destaque desliza para o lado certo, sem pular</td><td class="num" style="text-align:right">8</td></tr>
+        <tr><th scope="row"><code>offline</code></th><td>página offline e cópias guardadas pelo service worker</td><td class="num" style="text-align:right">5</td></tr>
+        <tr><th scope="row"><code>atualizacao-do-app</code></th><td>troca de versão do service worker (roda sob demanda, é lento)</td><td class="num" style="text-align:right">opcional</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="two">
+    <div style="display:grid; gap:12px">
+      <h3>Resultado da última execução</h3>
+<pre><span class="dim">$ npm test</span>
+<span class="ok">✅</span> avaliacoes-reais            13 ok   0 falhas
+<span class="ok">✅</span> carrossel                    8 ok   0 falhas
+<span class="ok">✅</span> contas-e-senhas             26 ok   0 falhas
+<span class="ok">✅</span> em-breve                    16 ok   0 falhas
+<span class="ok">✅</span> layout-celular              18 ok   0 falhas
+<span class="ok">✅</span> livros-google-books         28 ok   0 falhas
+<span class="ok">✅</span> livros-open-library         15 ok   0 falhas
+<span class="ok">✅</span> nao-lancados-e-busca        23 ok   0 falhas
+<span class="ok">✅</span> offline                      5 ok   0 falhas
+<span class="ok">✅</span> status-lancamento-detalhes  12 ok   0 falhas
+<span class="ok">✅</span> status-lancamento-modal     15 ok   0 falhas
+
+<span class="ok">179 verificações passaram; 0 arquivo(s) com falha.</span></pre>
+    </div>
+    <div class="prose" style="display:grid; gap:12px">
+      <h3>No GitHub</h3>
+      <p>O arquivo <code>.github/workflows/testes.yml</code> faz o GitHub Actions rodar todos os testes a cada push e a cada pull request, numa máquina Ubuntu limpa com Node 20 e Chromium. Cada commit ganha um ✅ ou ❌ na aba Actions, e as capturas de tela dos testes ficam guardadas para consulta.</p>
+      <p>O README mostra o selo com o estado atual, que fica verde quando todos os testes passam: <span class="badge-demo" aria-label="Exemplo do selo: Testes passing"><span>Testes</span><span>passing</span></span></p>
+      <p>Para evitar falso positivo, os testes novos foram rodados também no código antigo: eles falham lá (por exemplo, CLS de 0,474 e quatro janelas focáveis) e passam no código corrigido.</p>
+    </div>
+  </div>
+</section>
+
+<section id="reproduzir">
+  <div class="sec-head">
+    <div class="sec-num">5 · REPRODUZIR</div>
+    <h2>Como conferir estes números</h2>
+  </div>
+  <div class="two">
+    <div style="display:grid; gap:10px">
+      <h3>Testes</h3>
+<pre>cd tests
+npm install
+npx playwright install chromium
+npm test</pre>
+    </div>
+    <div style="display:grid; gap:10px">
+      <h3>Lighthouse</h3>
+<pre>python -m http.server 8090
+npx lighthouse http://localhost:8090 \
+  --form-factor=mobile --view</pre>
+      <p class="note">No Chrome também dá: F12 → aba Lighthouse → Analisar. O resumo completo das medições está em <code>docs/lighthouse/resumo.json</code>.</p>
+    </div>
+  </div>
+</section>
+
+<section id="proximos">
+  <div class="sec-head">
+    <div class="sec-num">6 · PRÓXIMOS PASSOS</div>
+    <h2>O que ainda dá para melhorar</h2>
+  </div>
+  <ul class="plain">
+    <li><b>Minificar e juntar os arquivos.</b> O Lighthouse estima 114&nbsp;KB a menos de JavaScript e 27&nbsp;KB a menos de CSS com minificação, e cerca de 70&nbsp;KB de CSS que nenhuma página usa.</li>
+    <li><b>Carregar traduções sob demanda.</b> O <code>i18n.js</code> traz os 11 idiomas de uma vez (164&nbsp;KB). Carregar só o idioma escolhido reduz o primeiro acesso.</li>
+    <li><b>Imagens do tamanho certo.</b> Pedir ao TMDB pôsteres menores no celular (w342 em vez de w500) acelera o maior elemento da página inicial.</li>
+    <li><b>Contas no servidor.</b> No site publicado, as contas ficam no navegador de cada pessoa. O backend em Python já existe; falta hospedá-lo para a conta funcionar em qualquer aparelho.</li>
+  </ul>
+</section>
+
+<footer>
+  CineBook v3 · Medições feitas em 24/09/2026 com Lighthouse 12.8.2 e Chromium 141, em ambiente controlado e sem acesso às APIs externas. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.
+</footer>
+</main>
+
+</body>
+</html>

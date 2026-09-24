@@ -1,0 +1,412 @@
+{
+ "ferramenta": "Lighthouse 12.8.2 (Chromium 141)",
+ "data": "2026-09-24",
+ "paginas": [
+  {
+   "id": "index",
+   "pagina": "Início (catálogo)",
+   "celular": {
+    "antes": {
+     "performance": 75,
+     "accessibility": 94,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8071496999999999,
+     "lcp": 7.2407245499999995,
+     "tbt": 81,
+     "cls": 0.005746922830606749
+    },
+    "depois": {
+     "performance": 76,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8111991,
+     "lcp": 6.4558982,
+     "tbt": 68,
+     "cls": 0.0008223889906107064
+    },
+    "depois_com_compressao": {
+     "performance": 90,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.3959317,
+     "lcp": 3.6272951000000013,
+     "tbt": 62.500000000000455,
+     "cls": 0.0008223889906107064
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 81,
+     "accessibility": 94,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.44584895,
+     "lcp": 1.706320275,
+     "tbt": 0,
+     "cls": 0.2443198598939251
+    },
+    "depois": {
+     "performance": 95,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.4379339,
+     "lcp": 1.4927356,
+     "tbt": 0,
+     "cls": 4.848537485840091e-05
+    }
+   }
+  },
+  {
+   "id": "detalhes",
+   "pagina": "Detalhes de filme",
+   "celular": {
+    "antes": {
+     "performance": 64,
+     "accessibility": 91,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8190581000000001,
+     "lcp": 6.8188807250000005,
+     "tbt": 18,
+     "cls": 0.2259556056741696
+    },
+    "depois": {
+     "performance": 78,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8270295,
+     "lcp": 5.493059000000001,
+     "tbt": 66,
+     "cls": 0.010729341941383778
+    },
+    "depois_com_compressao": {
+     "performance": 94,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.4111570999999998,
+     "lcp": 3.0365498500000005,
+     "tbt": 7.5,
+     "cls": 0.010729341941383778
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 89,
+     "accessibility": 91,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.43059030000000004,
+     "lcp": 1.1993612,
+     "tbt": 0,
+     "cls": 0.18142514162870943
+    },
+    "depois": {
+     "performance": 97,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.4502031999999999,
+     "lcp": 1.2864064,
+     "tbt": 0,
+     "cls": 7.751938989160263e-05
+    }
+   }
+  },
+  {
+   "id": "livro",
+   "pagina": "Detalhes de livro",
+   "celular": {
+    "antes": {
+     "performance": 75,
+     "accessibility": 91,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8007753000000002,
+     "lcp": 6.0571629499999995,
+     "tbt": 19,
+     "cls": 0.09027979710982689
+    },
+    "depois": {
+     "performance": 79,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.8198326,
+     "lcp": 5.337748899999999,
+     "tbt": 11,
+     "cls": 0.00614882428247895
+    },
+    "depois_com_compressao": {
+     "performance": 95,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.3897824,
+     "lcp": 2.8191296,
+     "tbt": 15,
+     "cls": 0.00614882428247895
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 96,
+     "accessibility": 91,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.44429445,
+     "lcp": 1.3101778,
+     "tbt": 0,
+     "cls": 0.05849817431973192
+    },
+    "depois": {
+     "performance": 98,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.43663884999999997,
+     "lcp": 1.15491655,
+     "tbt": 0,
+     "cls": 7.751938989160263e-05
+    }
+   }
+  },
+  {
+   "id": "estreias",
+   "pagina": "Em breve",
+   "celular": {
+    "antes": {
+     "performance": 79,
+     "accessibility": 94,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.6621217,
+     "lcp": 4.8091216999999995,
+     "tbt": 44.5,
+     "cls": 0.10171525760695349
+    },
+    "depois": {
+     "performance": 96,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.6600358999999998,
+     "lcp": 2.6420358999999998,
+     "tbt": 34.5,
+     "cls": 0.009070919246955852
+    },
+    "depois_com_compressao": {
+     "performance": 99,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 1.38354925,
+     "lcp": 1.9986477500000002,
+     "tbt": 32.5,
+     "cls": 0.009070919246955852
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 97,
+     "accessibility": 94,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.39586125,
+     "lcp": 0.9277225,
+     "tbt": 0,
+     "cls": 0.09609035287166207
+    },
+    "depois": {
+     "performance": 100,
+     "accessibility": 100,
+     "best-practices": 96,
+     "seo": 100,
+     "fcp": 0.394966,
+     "lcp": 0.7669320000000001,
+     "tbt": 0,
+     "cls": 2.0885420863292303e-05
+    }
+   }
+  },
+  {
+   "id": "login",
+   "pagina": "Entrar",
+   "celular": {
+    "antes": {
+     "performance": 85,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.9514637000000001,
+     "lcp": 4.0744637,
+     "tbt": 0,
+     "cls": 4.822038690824512e-05
+    },
+    "depois": {
+     "performance": 91,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.9511996999999999,
+     "lcp": 3.3186997000000003,
+     "tbt": 0,
+     "cls": 4.822038690824512e-05
+    },
+    "depois_com_compressao": {
+     "performance": 99,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.3873042,
+     "lcp": 2.0261084,
+     "tbt": 0,
+     "cls": 4.822038690824512e-05
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 99,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.4433175,
+     "lcp": 0.8803175000000001,
+     "tbt": 0,
+     "cls": 5.8691436462072794e-05
+    },
+    "depois": {
+     "performance": 100,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.45124200000000003,
+     "lcp": 0.766242,
+     "tbt": 0,
+     "cls": 5.8691436462072794e-05
+    }
+   }
+  },
+  {
+   "id": "cadastro",
+   "pagina": "Criar conta",
+   "celular": {
+    "antes": {
+     "performance": 85,
+     "accessibility": 96,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.9542998172312118,
+     "lcp": 4.090799817231212,
+     "tbt": 7,
+     "cls": 0.011334041115213876
+    },
+    "depois": {
+     "performance": 91,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.9523858,
+     "lcp": 3.3253858,
+     "tbt": 0,
+     "cls": 0.011334041115213876
+    },
+    "depois_com_compressao": {
+     "performance": 99,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.3820506000000001,
+     "lcp": 1.9856012,
+     "tbt": 0,
+     "cls": 0.011334041115213876
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 99,
+     "accessibility": 96,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.4408793000000001,
+     "lcp": 0.8828793,
+     "tbt": 0,
+     "cls": 0.0011593214671027996
+    },
+    "depois": {
+     "performance": 100,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.4622578,
+     "lcp": 0.7882577999999999,
+     "tbt": 0,
+     "cls": 0.0011593214671027996
+    }
+   }
+  },
+  {
+   "id": "institucional",
+   "pagina": "Institucional",
+   "celular": {
+    "antes": {
+     "performance": 91,
+     "accessibility": 95,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.6515673999999998,
+     "lcp": 3.4270674,
+     "tbt": 1,
+     "cls": 0.010470851860979865
+    },
+    "depois": {
+     "performance": 96,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.6658139,
+     "lcp": 2.7008139,
+     "tbt": 0,
+     "cls": 6.72495355722428e-05
+    },
+    "depois_com_compressao": {
+     "performance": 99,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 1.38285835,
+     "lcp": 1.6487167,
+     "tbt": 15.5,
+     "cls": 6.72495355722428e-05
+    }
+   },
+   "computador": {
+    "antes": {
+     "performance": 100,
+     "accessibility": 95,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.39472495,
+     "lcp": 0.7044499000000001,
+     "tbt": 0,
+     "cls": 0.004693448439121873
+    },
+    "depois": {
+     "performance": 100,
+     "accessibility": 100,
+     "best-practices": 100,
+     "seo": 100,
+     "fcp": 0.39409884999999995,
+     "lcp": 0.5911976999999999,
+     "tbt": 0,
+     "cls": 2.0885420863292303e-05
+    }
+   }
+  }
+ ]
+}
