@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sobre o CineBook, termos de uso, política de privacidade e fontes de dados.">
-  <title>Institucional • CineBook</title>
+  <meta name="description" content="Próximas estreias de filmes nos cinemas do Brasil, com data e lembrete na sua agenda.">
+  <title>Em breve nos cinemas • CineBook</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,7 +50,7 @@
             <a href="index.html?tab=people" class="cine-nav-item" data-tab="people" id="tabPeople" data-i18n="nav_people">
               Pessoas
             </a>
-            <a href="estreias.html" class="cine-nav-item" id="tabUpcoming" data-i18n="nav_upcoming">Em breve</a>
+            <a href="estreias.html" class="cine-nav-item active" id="tabUpcoming" data-i18n="nav_upcoming">Em breve</a>
           </nav>
         </div>
 
@@ -75,67 +75,33 @@
       </div>
     </header>
 
-    <main class="legal-page">
-      <aside class="legal-toc" aria-label="Nesta página">
-        <p class="legal-toc-title">Nesta página</p>
-        <a href="#sobre">Sobre o CineBook</a>
-        <a href="#termos">Termos de uso</a>
-        <a href="#privacidade">Privacidade</a>
-        <a href="#fontes">Fontes de dados</a>
-      </aside>
-
-      <div class="legal-content">
-        <p class="legal-updated">Última atualização: setembro de 2026</p>
-
-        <section id="sobre" class="legal-section">
-          <h1>Sobre o CineBook</h1>
-          <p>O CineBook reúne filmes, séries e livros em um só catálogo. Você encontra sinopse, elenco ou autores, trailers, data de estreia e onde assistir, ler ou comprar, e ainda pode montar sua própria lista e publicar suas avaliações.</p>
-          <p>O catálogo é atualizado automaticamente a partir de bases públicas de referência (veja <a href="#fontes">Fontes de dados</a>) e está disponível em 11 idiomas. O CineBook também pode ser instalado como aplicativo no computador e no celular.</p>
-        </section>
-
-        <section id="termos" class="legal-section">
-          <h2>Termos de uso</h2>
-          <p>Ao usar o CineBook você concorda com estes termos.</p>
-          <h3>Uso do serviço</h3>
-          <p>O CineBook é oferecido para uso pessoal. Não é permitido usar o site para coletar dados em massa, sobrecarregar os serviços ou contornar qualquer mecanismo de segurança.</p>
-          <h3>Conteúdo de terceiros</h3>
-          <p>Sinopses, pôsteres, capas, fotos e trailers pertencem aos seus respectivos titulares e são exibidos a partir das fontes listadas em <a href="#fontes">Fontes de dados</a>. As informações podem mudar ou conter imprecisões vindas dessas fontes.</p>
-          <h3>Links para outros sites</h3>
-          <p>Os botões de streaming, lojas de livros e compra de ingressos levam para sites de terceiros. O CineBook não vende ingressos, livros nem assinaturas: qualquer compra acontece no site do parceiro, sob os termos e a política de privacidade dele.</p>
-          <h3>Avaliações publicadas</h3>
-          <p>Quem publica uma avaliação é responsável pelo que escreve. Conteúdo ofensivo, discriminatório, ilegal ou que revele dados pessoais de terceiros pode ser removido.</p>
-        </section>
-
-        <section id="privacidade" class="legal-section">
-          <h2>Privacidade</h2>
-          <h3>O que fica salvo no seu navegador</h3>
-          <p>Para funcionar, o CineBook guarda no próprio navegador (armazenamento local): o idioma escolhido, sua lista de filmes, séries e livros, as avaliações que você publica e os dados da conta criada no site (nome, e-mail e preferências de gênero). Nesta versão, essas informações ficam apenas no seu dispositivo e não são enviadas a um servidor do CineBook.</p>
-          <p>Também ficam em cache, por até 7 dias, respostas das bases de dados de filmes e livros, para o site carregar mais rápido e funcionar offline.</p>
-          <h3>Serviços de terceiros</h3>
-          <p>Ao navegar, seu navegador se conecta diretamente a serviços como TMDB (dados e imagens de filmes e séries), Google Books (dados e capas de livros), YouTube (trailers), Google Fonts (tipografia) e à hospedagem do site. Esses serviços recebem informações técnicas da conexão, como o endereço IP, conforme as políticas de privacidade de cada um.</p>
-          <h3>Como apagar seus dados</h3>
-          <p>Você pode sair da conta a qualquer momento pelo menu do perfil. Para apagar tudo, limpe os dados do site nas configurações do navegador (ou desinstale o aplicativo).</p>
-        </section>
-
-        <section id="fontes" class="legal-section">
-          <h2>Fontes de dados</h2>
-          <div class="legal-source">
-            <strong>TMDB (The Movie Database)</strong>
-            <p>Informações, imagens, elenco, trailers e disponibilidade em streaming de filmes e séries. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">themoviedb.org ↗</a></p>
-          </div>
-          <div class="legal-source">
-            <strong>Google Books</strong>
-            <p>Capas, autores, editoras, sinopses, número de páginas, notas de leitores, amostras e links de compra de livros. <a href="https://books.google.com/" target="_blank" rel="noopener noreferrer">books.google.com ↗</a></p>
-          </div>
-          <div class="legal-source">
-            <strong>JustWatch (via TMDB)</strong>
-            <p>A lista de plataformas de "onde assistir" vem da parceria do TMDB com o JustWatch. <a href="https://www.justwatch.com/" target="_blank" rel="noopener noreferrer">justwatch.com ↗</a></p>
-          </div>
-        </section>
+    <main class="up-page">
+      <div class="up-hero">
+        <p class="up-kicker" data-i18n="upcoming_kicker">Calendário de estreias</p>
+        <h1 data-i18n="upcoming_title">Em breve nos cinemas</h1>
+        <p class="up-sub" data-i18n="upcoming_subtitle">As próximas estreias no Brasil, dia a dia. Coloque na sua agenda para não perder.</p>
       </div>
+
+      <div class="up-toolbar" role="toolbar" aria-label="Filtros">
+        <div class="up-chips" role="group" aria-label="Período">
+          <button type="button" class="up-chip" data-period="30" data-i18n="upcoming_period_30">Próximos 30 dias</button>
+          <button type="button" class="up-chip active" data-period="90" data-i18n="upcoming_period_90">3 meses</button>
+          <button type="button" class="up-chip" data-period="180" data-i18n="upcoming_period_180">6 meses</button>
+          <button type="button" class="up-chip" data-period="365" data-i18n="upcoming_period_365">12 meses</button>
+        </div>
+        <div class="up-chips" role="group" aria-label="Ordenar">
+          <button type="button" class="up-chip active" data-sort="date" data-i18n="upcoming_sort_date">Por data</button>
+          <button type="button" class="up-chip" data-sort="popular" data-i18n="upcoming_sort_popular">Mais aguardados</button>
+        </div>
+        <span class="up-count" id="upcomingCount" aria-live="polite"></span>
+      </div>
+
+      <div id="upcomingList" class="up-list"></div>
+
+      <p class="up-source" data-i18n="upcoming_source">Datas de estreia no Brasil fornecidas pelo TMDB. Podem mudar — confira no cinema antes de ir.</p>
     </main>
 
-  <footer class="site-footer" role="contentinfo">
+    <footer class="site-footer" role="contentinfo">
     <div class="site-footer-inner">
       <div class="site-footer-top">
         <div class="site-footer-brand">
@@ -190,5 +156,9 @@
   <script>document.querySelectorAll('.site-footer-year').forEach(function (el) { el.textContent = new Date().getFullYear(); });</script>
 
   </div>
+
+  <script src="js/data.js?v=20260924e"></script>
+  <script src="js/tmdb.js?v=20260924e"></script>
+  <script src="js/upcoming.js?v=20260924e"></script>
 </body>
 </html>

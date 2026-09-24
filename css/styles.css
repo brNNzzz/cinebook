@@ -4849,3 +4849,64 @@ body {
 .rv-link { color: #94a3b8; font-size: 0.85rem; text-decoration: none; }
 .rv-link:hover, .rv-more:hover { color: #1ed5a9; }
 .rv-empty { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
+/* ==========================================================================
+   EM BREVE (estreias.html)
+   ========================================================================== */
+.up-page { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 4rem; width: 100%; box-sizing: border-box; }
+.up-hero { margin-bottom: 1.75rem; }
+.up-kicker { margin: 0 0 0.4rem; color: #1ed5a9; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.up-hero h1 { margin: 0; color: #fff; font-size: clamp(1.8rem, 4vw, 2.6rem); }
+.up-sub { margin: 0.6rem 0 0; color: var(--text-secondary); max-width: 640px; line-height: 1.6; }
+.up-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; margin-bottom: 1.75rem; }
+.up-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.up-chip {
+  padding: 0.45rem 0.95rem; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1; font-size: 0.86rem; font-weight: 600;
+}
+.up-chip:hover { border-color: rgba(30, 213, 169, 0.5); color: #fff; }
+.up-chip.active { background: rgba(30, 213, 169, 0.15); border-color: #1ed5a9; color: #1ed5a9; }
+.up-count { margin-left: auto; color: var(--text-muted); font-size: 0.85rem; }
+.up-month { margin-bottom: 2rem; }
+.up-month h2 { margin: 0 0 0.9rem; color: #fff; font-size: 1.25rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.up-group { display: flex; flex-direction: column; gap: 0.75rem; }
+.up-row {
+  display: grid; grid-template-columns: 58px 64px 1fr auto; gap: 1rem; align-items: center;
+  padding: 0.85rem 1rem; border-radius: 14px;
+  background: rgba(15, 23, 42, 0.65); border: 1px solid rgba(255, 255, 255, 0.07);
+}
+.up-date { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 58px; border-radius: 12px; background: rgba(30, 213, 169, 0.1); border: 1px solid rgba(30, 213, 169, 0.3); }
+.up-day { color: #fff; font-size: 1.35rem; font-weight: 800; line-height: 1; }
+.up-weekday { color: #1ed5a9; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 0.2rem; }
+.up-poster { display: block; width: 64px; height: 96px; border-radius: 8px; overflow: hidden; background: #1e293b; }
+.up-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.up-info { min-width: 0; }
+.up-info h3 { margin: 0; font-size: 1.05rem; }
+.up-info h3 a { color: #fff; text-decoration: none; }
+.up-info h3 a:hover { color: #1ed5a9; }
+.up-original { margin: 0.15rem 0 0; color: var(--text-muted); font-size: 0.82rem; }
+.up-meta { margin: 0.45rem 0 0; display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; align-items: center; font-size: 0.84rem; color: #cbd5e1; }
+.up-countdown { color: #1ed5a9; font-weight: 700; }
+.up-flag { padding: 0.05rem 0.45rem; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.4); color: #fbbf24; font-size: 0.72rem; }
+.up-genres { margin: 0.35rem 0 0; color: var(--text-muted); font-size: 0.8rem; }
+.up-actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.up-btn {
+  display: inline-flex; justify-content: center; align-items: center; white-space: nowrap;
+  padding: 0.45rem 0.8rem; border-radius: 9px; cursor: pointer; text-decoration: none;
+  font-size: 0.8rem; font-weight: 700; color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.up-btn:hover { border-color: #1ed5a9; color: #fff; }
+.up-btn-primary { background: rgba(30, 213, 169, 0.14); border-color: rgba(30, 213, 169, 0.45); color: #1ed5a9; }
+.up-empty { text-align: center; padding: 2rem 1rem; color: var(--text-muted); }
+.up-notice { padding: 0.75rem 1rem; border-radius: 10px; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); color: #fbbf24; font-size: 0.88rem; }
+.up-source { margin-top: 2rem; color: var(--text-muted); font-size: 0.8rem; }
+@media (max-width: 720px) {
+  .up-page { padding: 1.5rem 1rem 3rem; }
+  .up-row { grid-template-columns: 50px 56px 1fr; }
+  .up-poster { width: 56px; height: 84px; }
+  .up-actions { grid-column: 1 / -1; flex-direction: row; }
+  .up-actions .up-btn { flex: 1; }
+  .up-count { margin-left: 0; width: 100%; }
+}

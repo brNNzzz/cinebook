@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.4.0';
+const VERSION = 'v1.5.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -50,6 +50,7 @@ const PAGE_CANDIDATES = [
   ['/cadastro', '/cadastro.html'],
   ['/perfil', '/perfil.html'],
   ['/institucional', '/institucional.html'],
+  ['/estreias', '/estreias.html'],
 ];
 
 /** Estáticos essenciais. Ausências são ignoradas silenciosamente. */
@@ -61,6 +62,7 @@ const STATIC_ASSETS = [
   '/js/books.js',
   '/js/auth.js',
   '/js/reviews.js',
+  '/js/upcoming.js',
   '/js/app.js',
   '/js/details.js',
   '/js/pwa.js',
