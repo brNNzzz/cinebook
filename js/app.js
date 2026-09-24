@@ -195,7 +195,7 @@ function renderUserRecommendationsBanner() {
         <div>
           <h3 class="user-rec-title">
             Recomendações para ${firstName}
-            <span style="font-size: 0.72rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700;">Personalizado</span>
+            <span style="font-size: 0.72rem; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 0.15rem 0.5rem; border-radius: 6px; font-weight: 700; white-space: nowrap; flex-shrink: 0;">Personalizado</span>
           </h3>
           <p class="user-rec-desc">Obras recomendadas priorizadas no topo. Todas as outras categorias continuam disponíveis no catálogo abaixo:</p>
         </div>

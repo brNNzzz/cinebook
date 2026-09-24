@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Crie sua conta no CINEBOOKS e comece a montar sua estante de filmes, séries e livros.">
   <title>CINEBOOKS | Criar Conta</title>
 
@@ -11,9 +11,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/styles.css?v=20260924d">
-  <script src="js/i18n.js?v=20260924d" defer></script>
-  <script src="js/auth.js?v=20260924d"></script>
+  <link rel="stylesheet" href="css/styles.css?v=20260924f">
+  <script src="js/i18n.js?v=20260924f" defer></script>
+  <script src="js/auth.js?v=20260924f"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -23,15 +23,19 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CineBook">
-  <script src="js/pwa.js?v=20260924d" defer></script>
+  <script src="js/pwa.js?v=20260924f" defer></script>
   <style>
     /* ==========================================================================
        TELA DE CADASTRO 100% NA MESMA PÁGINA (ZERO ROLAGEM / 100VH FIT)
        ========================================================================== */
     html, body {
-      height: 100vh;
-      max-height: 100vh;
-      overflow: hidden;
+      /* A página rola quando o conteúdo não cabe (antes era "overflow: hidden"
+         com altura fixa de 100vh: em notebooks o botão de continuar ficava
+         abaixo da tela, sem como rolar até ele). */
+      min-height: 100vh;
+      /* "clip" corta o que passar da largura sem criar uma segunda área de
+         rolagem (com "hidden" o cabeçalho deixava de ficar fixo no topo). */
+      overflow-x: clip;
       background-color: #0b0f1d;
       color: #ffffff;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -48,6 +52,8 @@
 
     /* HEADER MODERNO COM GLASSMORPHISM & GRADIENTE */
     .cine-header {
+      position: sticky;
+      top: 0;
       height: 60px;
       min-height: 60px;
       background: rgba(11, 15, 29, 0.88);
@@ -392,9 +398,8 @@
     .cine-main-layout {
       display: flex;
       flex: 1;
-      height: calc(100vh - 60px);
-      max-height: calc(100vh - 60px);
-      overflow: hidden;
+      min-height: calc(100vh - 60px);
+      align-items: stretch;
       background-color: #0b0f1d;
     }
 
@@ -407,7 +412,7 @@
       flex-direction: column;
       justify-content: center;
       z-index: 10;
-      height: 100%;
+      min-height: calc(100vh - 60px);
     }
 
     .cine-eyebrow {
@@ -527,7 +532,10 @@
     /* COLUNA DIREITA: MURAL DE PÔSTERES COM ANIMAÇÃO SUAVE */
     .cine-poster-wall-column {
       flex: 1;
-      height: 100%;
+      position: sticky;
+      top: 60px;
+      align-self: flex-start;
+      height: calc(100vh - 60px);
       padding: 1rem 2rem 1rem 1rem;
       display: flex;
       align-items: center;
@@ -641,7 +649,26 @@
         overflow-y: visible !important;
       }
       .cine-poster-wall-column { display: none; }
-      .cine-form-column { width: 100%; max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; }
+      .cine-form-column { width: 100%; min-width: 0; max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; }
+    }
+    /* Cabeçalho no celular: logo numa linha e o menu logo abaixo, em linha */
+    @media (max-width: 760px) {
+      .cine-header > div:first-child {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem !important;
+        justify-content: space-between;
+      }
+      .cine-header .cine-nav-links {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 0.35rem 1rem !important;
+        justify-content: center;
+        order: 3;
+      }
+      .cine-header .cine-nav-link { padding: 0.25rem 0; font-size: 0.85rem; }
     }
   </style>
 </head>
@@ -661,6 +688,7 @@
         <a href="index.html?tab=series" class="cine-nav-link" data-i18n="nav_series">Séries</a>
         <a href="index.html?tab=book" class="cine-nav-link" data-i18n="nav_books">Livros</a>
         <a href="index.html?tab=people" class="cine-nav-link" data-i18n="nav_people">Pessoas</a>
+        <a href="estreias.html" class="cine-nav-link" data-i18n="nav_upcoming">Em breve</a>
       </nav>
     </div>
 

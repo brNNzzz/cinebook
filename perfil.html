@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CineBook - Perfil do Usuário & Painel</title>
   <meta name="description" content="Painel completo de perfil, estatísticas e estante personalizada no CineBook.">
   
@@ -11,11 +11,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/styles.css?v=20260924d">
-  <script src="js/data.js?v=20260924d"></script>
-  <script src="js/tmdb.js?v=20260924d"></script>
-  <script src="js/auth.js?v=20260924d"></script>
-  <script src="js/i18n.js?v=20260924d" defer></script>
+  <link rel="stylesheet" href="css/styles.css?v=20260924f">
+  <script src="js/data.js?v=20260924f"></script>
+  <script src="js/tmdb.js?v=20260924f"></script>
+  <script src="js/auth.js?v=20260924f"></script>
+  <script src="js/i18n.js?v=20260924f" defer></script>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -25,7 +25,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="CineBook">
-  <script src="js/pwa.js?v=20260924d" defer></script>
+  <script src="js/pwa.js?v=20260924f" defer></script>
   
   <style>
     /* ==========================================================================
@@ -935,6 +935,58 @@
         margin: 0;
       }
     }
+
+    /* Celular: abas do perfil roláveis de lado (com dica visual) e o botão
+       de editar numa linha própria — antes os dois passavam da tela. */
+    @media (max-width: 760px) {
+      .subnav-container {
+        padding: 0 0.75rem;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding-bottom: 0.6rem;
+      }
+      .subnav-tabs {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        mask-image: linear-gradient(90deg, #000 85%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+      }
+      .subnav-tabs::-webkit-scrollbar { display: none; }
+      .subnav-tab-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        padding: 0.7rem 0.85rem;
+        font-size: 0.86rem;
+      }
+      .btn-edit-profile-trigger {
+        align-self: center;
+      }
+      .cine-header .cine-nav-links {
+        flex-wrap: wrap;
+        gap: 0.4rem 0.9rem;
+      }
+    }
+    /* Cabeçalho no celular: logo numa linha e o menu logo abaixo, em linha */
+    @media (max-width: 760px) {
+      .cine-header > div:first-child {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem !important;
+        justify-content: space-between;
+      }
+      .cine-header .cine-nav-links {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 0.35rem 1rem !important;
+        justify-content: center;
+        order: 3;
+      }
+      .cine-header .cine-nav-link { padding: 0.25rem 0; font-size: 0.85rem; }
+    }
   </style>
 </head>
 <body>
@@ -953,6 +1005,7 @@
         <a href="index.html?tab=series" class="cine-nav-link" data-i18n="nav_series">Séries</a>
         <a href="index.html?tab=book" class="cine-nav-link" data-i18n="nav_books">Livros</a>
         <a href="index.html?tab=people" class="cine-nav-link" data-i18n="nav_people">Pessoas</a>
+        <a href="estreias.html" class="cine-nav-link" data-i18n="nav_upcoming">Em breve</a>
       </nav>
     </div>
 

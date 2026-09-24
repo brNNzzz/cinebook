@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.5.0';
+const VERSION = 'v1.6.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;

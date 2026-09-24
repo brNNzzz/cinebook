@@ -3852,8 +3852,8 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 0.75rem;
-  max-height: 380px;
-  overflow-y: auto;
+  /* Sem rolagem interna: a página inteira rola (uma rolagem só é mais fácil
+     no celular e não esconde o botão de continuar). */
   padding: 0.25rem;
   margin-bottom: 1.5rem;
   border-radius: 12px;
@@ -3951,6 +3951,13 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  /* Botões sempre à vista: ficam presos no rodapé da tela enquanto a pessoa
+     rola a lista de categorias. */
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  padding: 1rem 0 max(1rem, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(11, 15, 29, 0) 0%, #0b0f1d 28%);
 }
 
 .btn-complete-onboarding {
@@ -4909,4 +4916,42 @@ body {
   .up-actions { grid-column: 1 / -1; flex-direction: row; }
   .up-actions .up-btn { flex: 1; }
   .up-count { margin-left: 0; width: 100%; }
+}
+
+/* ==========================================================================
+   AJUSTES DE CELULAR — nada pode passar da largura da tela
+   (antes o excesso era escondido com overflow-x: hidden, o que cortava
+   conteúdo em vez de encaixá-lo)
+   ========================================================================== */
+img, video, iframe, svg { max-width: 100%; }
+
+/* Colunas de grid com "1fr" crescem até caber o conteúdo mais largo;
+   minmax(0, 1fr) + min-width: 0 fazem a coluna respeitar a tela. */
+.details-content-wrapper { grid-template-columns: minmax(0, 1fr) 320px; }
+.details-main-column,
+.details-sidebar-column,
+.details-card-block { min-width: 0; }
+
+@media (max-width: 900px) {
+  .details-content-wrapper { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+@media (max-width: 768px) {
+  /* Menu principal: as abas quebram em duas linhas em vez de sumirem
+     pela lateral da tela. */
+  .cine-nav-links,
+  .nav-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .cine-nav-item,
+  .nav-tab-btn {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  /* Textos longos (títulos, e-mails, links) quebram em vez de empurrar a tela */
+  h1, h2, h3, p, .card-title, .details-main-title { overflow-wrap: anywhere; }
 }
