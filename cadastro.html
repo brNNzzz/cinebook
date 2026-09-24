@@ -13,6 +13,7 @@
 
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/i18n.js" defer></script>
+  <script src="js/auth.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -736,7 +737,7 @@
           >
           <ul class="cine-password-reqs">
             <li data-i18n="req_length">Sua senha precisa conter pelo menos 8 caracteres.</li>
-            <li data-i18n="req_numeric">Sua senha não pode ser inteiramente numérica.</li>
+            <li data-i18n="req_letters_numbers">Use letras e números, e evite senhas óbvias como 12345678.</li>
           </ul>
         </div>
 
@@ -934,37 +935,6 @@
     let selectedGenresSet = new Set(['scifi', 'action']);
     let createdUserTemp = null;
 
-    function getRegisteredUsers() {
-      try {
-        const list = JSON.parse(localStorage.getItem('cinebook_registered_users'));
-        if (Array.isArray(list) && list.length > 0) return list;
-      } catch (e) {}
-      const defaultList = [
-        {
-          id: 1,
-          name: 'pedro',
-          email: 'pedro@cinebook.com',
-          password: '123456',
-          avatar: 'P',
-          preferredCategories: ['scifi', 'action'],
-          createdAt: 'Conta Demo'
-        }
-      ];
-      localStorage.setItem('cinebook_registered_users', JSON.stringify(defaultList));
-      return defaultList;
-    }
-
-    function saveRegisteredUser(userRecord) {
-      const list = getRegisteredUsers();
-      const index = list.findIndex(u => u.email.toLowerCase() === userRecord.email.toLowerCase() || u.name.toLowerCase() === userRecord.name.toLowerCase());
-      if (index >= 0) {
-        list[index] = userRecord;
-      } else {
-        list.push(userRecord);
-      }
-      localStorage.setItem('cinebook_registered_users', JSON.stringify(list));
-    }
-
     // Renderiza a grade interativa de escolha de categorias
     function renderCategoryPicker() {
       const grid = document.getElementById('categoryPickerGrid');
@@ -1031,68 +1001,55 @@
         return;
       }
 
-      if (password.length < 8) {
-        errorBox.textContent = 'A senha precisa conter pelo menos 8 caracteres.';
-        errorBox.style.display = 'block';
-        return;
-      }
-
-      if (/^\d+$/.test(password)) {
-        errorBox.textContent = 'Sua senha não pode ser inteiramente numérica.';
-        errorBox.style.display = 'block';
-        return;
-      }
-
-      // Verifica se usuário ou e-mail já existe localmente
-      const registered = getRegisteredUsers();
-      const alreadyExists = registered.some(u => u.email.toLowerCase() === email.toLowerCase() || u.name.toLowerCase() === username.toLowerCase());
-      if (alreadyExists) {
-        errorBox.textContent = 'Já existe uma conta cadastrada com este e-mail ou nome de usuário. Faça login ou use outro.';
-        errorBox.style.display = 'block';
-        return;
-      }
-
       const initialPrefs = Array.from(selectedGenresSet);
+      const submitBtn = document.getElementById('submitBtn');
+      const originalLabel = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Criando conta...';
 
-      const newUser = {
-        id: Date.now(),
-        name: username,
-        email: email,
-        password: password,
-        avatar: '🍿',
-        preferredCategories: initialPrefs,
-        createdAt: new Date().toLocaleDateString('pt-BR')
-      };
-
-      createdUserTemp = newUser;
-
-      // Sempre persiste no registro local
-      saveRegisteredUser(newUser);
-
-      // Tenta enviar para o backend se disponível
       try {
-        const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: username,
-            email: email,
-            password: password,
-            avatar: '🍿',
-            preferredCategories: initialPrefs
-          })
+        // Conta local: a senha vira hash (js/auth.js) e nunca é salva em texto.
+        await CineAuth.ready;
+        const created = await CineAuth.register({
+          name: username,
+          email,
+          password,
+          avatar: '🍿',
+          preferredCategories: initialPrefs
         });
-
-        const data = await response.json();
-        if (response.ok && data.success) {
-          createdUserTemp = data.user;
-          localStorage.setItem('cinebook_user', JSON.stringify(data.user));
+        if (!created.ok) {
+          errorBox.textContent = created.error;
+          errorBox.style.display = 'block';
+          return;
         }
-      } catch (err) {
-        console.warn("Backend offline, continuando em modo local...");
-      }
+        createdUserTemp = created.user;
 
-      localStorage.setItem('cinebook_user', JSON.stringify(createdUserTemp));
+        // Backend Python: só quando é ele que está servindo o site.
+        if (apiBaseUrl === window.location.origin) {
+          try {
+            const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: username,
+                email: email,
+                password: password,
+                avatar: '🍿',
+                preferredCategories: initialPrefs
+              })
+            });
+            const data = await response.json();
+            if (response.ok && data.success) createdUserTemp = CineAuth.toSessionUser(data.user);
+          } catch (err) {
+            console.warn("Backend offline, continuando em modo local...");
+          }
+        }
+
+        CineAuth.setSession(createdUserTemp);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+      }
 
       // Avança suavemente para a Etapa 2 (Escolha de Categorias Favoritas)
       step1Section.style.display = 'none';
@@ -1113,11 +1070,13 @@
 
       if (user) {
         user.preferredCategories = finalPrefs;
-        localStorage.setItem('cinebook_user', JSON.stringify(user));
-        saveRegisteredUser(user);
+        CineAuth.setSession(user);
+        // Só atualiza as preferências: nunca regrava a conta inteira (o que
+        // apagaria o hash da senha).
+        CineAuth.updateProfile(user.email, { preferredCategories: finalPrefs });
 
         // Atualiza backend se disponível
-        try {
+        if (apiBaseUrl === window.location.origin) try {
           await fetch(`${apiBaseUrl}/api/user/update`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

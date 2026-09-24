@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.2.0';
+const VERSION = 'v1.3.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -59,6 +59,7 @@ const STATIC_ASSETS = [
   '/js/data.js',
   '/js/tmdb.js',
   '/js/books.js',
+  '/js/auth.js',
   '/js/app.js',
   '/js/details.js',
   '/js/pwa.js',

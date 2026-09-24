@@ -13,6 +13,7 @@
 
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/i18n.js" defer></script>
+  <script src="js/auth.js"></script>
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -807,23 +808,12 @@
     const form = document.getElementById('cineLoginForm');
     const errorBox = document.getElementById('loginErrorBox');
 
-    function getRegisteredUsers() {
-      try {
-        const list = JSON.parse(localStorage.getItem('cinebook_registered_users'));
-        if (Array.isArray(list) && list.length > 0) return list;
-      } catch (e) {}
-      const defaultList = [
-        {
-          id: 1,
-          name: 'pedro',
-          email: 'pedro@cinebook.com',
-          password: '123456',
-          avatar: '🍿',
-          createdAt: 'Conta Demo'
-        }
-      ];
-      localStorage.setItem('cinebook_registered_users', JSON.stringify(defaultList));
-      return defaultList;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const nextPage = CineAuth.safeNextPage(new URLSearchParams(location.search).get('next'));
+
+    function showLoginError(msg) {
+      errorBox.textContent = msg;
+      errorBox.style.display = 'block';
     }
 
     form.addEventListener('submit', async (e) => {
@@ -833,9 +823,10 @@
 
       errorBox.style.display = 'none';
 
-      // 1. Tenta autenticar pelo backend SQLite
-      let backendSuccess = false;
-      try {
+      // 1. Backend Python (só quando o site está sendo servido por ele, em
+      //    localhost:8000). Em qualquer outro endereço a senha nunca é enviada
+      //    para "localhost" — lá pode estar rodando outro programa qualquer.
+      if (apiBaseUrl === window.location.origin) try {
         const response = await fetch(`${apiBaseUrl}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -844,8 +835,8 @@
 
         const data = await response.json();
         if (response.ok && data.success) {
-          localStorage.setItem('cinebook_user', JSON.stringify(data.user));
-          window.location.href = 'index.html?login=true';
+          CineAuth.setSession(data.user);
+          window.location.href = nextPage;
           return;
         } else if (response.status === 401 || (data && data.error)) {
           // O backend respondeu explicitamente que as credenciais são inválidas
@@ -857,36 +848,23 @@
         console.warn("Backend offline, verificando registro local de usuários...");
       }
 
-      // 2. Verificação no registro local de contas cadastradas
-      const registeredUsers = getRegisteredUsers();
-      const userMatch = registeredUsers.find(u => 
-        u.email.toLowerCase() === identifier.toLowerCase() || 
-        u.name.toLowerCase() === identifier.toLowerCase()
-      );
-
-      if (!userMatch) {
-        errorBox.textContent = 'Nenhuma conta encontrada com este usuário ou e-mail. Por favor, crie uma conta primeiro.';
-        errorBox.style.display = 'block';
-        return;
+      // 2. Contas deste navegador (senha conferida por hash, nunca em texto)
+      submitBtn.disabled = true;
+      const originalLabel = submitBtn.textContent;
+      submitBtn.textContent = 'Entrando...';
+      try {
+        await CineAuth.ready;
+        const result = await CineAuth.login(identifier, password);
+        if (!result.ok) {
+          showLoginError(result.error);
+          return;
+        }
+        CineAuth.setSession(result.user);
+        window.location.href = nextPage;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
       }
-
-      if (userMatch.password !== password) {
-        errorBox.textContent = 'Senha incorreta. Verifique sua senha e tente novamente.';
-        errorBox.style.display = 'block';
-        return;
-      }
-
-      // Login bem-sucedido!
-      const sessionUser = {
-        id: userMatch.id,
-        name: userMatch.name,
-        email: userMatch.email,
-        avatar: userMatch.avatar || '🍿',
-        createdAt: userMatch.createdAt
-      };
-
-      localStorage.setItem('cinebook_user', JSON.stringify(sessionUser));
-      window.location.href = 'index.html?login=true';
     });
   </script>
 </body>

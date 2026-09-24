@@ -1,13 +1,17 @@
 """
 Módulo de Banco de Dados e Lógica de Negócios em Python - CineBook
 Utiliza SQLite3 (nativo do Python) para persistência de mídias, avaliações,
-autenticação segura de usuários com Hash SHA-256 e algoritmos de recomendação.
+autenticação de usuários com senha protegida por PBKDF2-SHA256 (com sal
+aleatório por conta) e algoritmos de recomendação.
 """
 
 import sqlite3
 import json
 import os
 import hashlib
+import hmac
+import secrets
+import base64
 from typing import List, Dict, Any, Optional
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "cinebook.db")
@@ -18,9 +22,59 @@ def get_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+PBKDF2_ITERATIONS = 600_000  # recomendação OWASP (2023) para PBKDF2-HMAC-SHA256
+LEGACY_DEMO_HASH = hashlib.sha256(b"123456").hexdigest()
+
+
 def hash_password(password: str) -> str:
-    """Criptografa a senha usando SHA-256 (Padrão seguro na computação)."""
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+    """
+    Gera o hash da senha com PBKDF2-HMAC-SHA256 e um sal aleatório por conta.
+    Formato guardado: pbkdf2_sha256$<iterações>$<sal base64>$<hash base64>
+    (antes era SHA-256 puro, sem sal — rápido demais de quebrar por força bruta).
+    """
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERATIONS)
+    return "pbkdf2_sha256${}${}${}".format(
+        PBKDF2_ITERATIONS,
+        base64.b64encode(salt).decode("ascii"),
+        base64.b64encode(digest).decode("ascii"),
+    )
+
+
+def verify_password(password: str, stored: str):
+    """
+    Confere a senha. Devolve (confere, precisa_atualizar_hash).
+    Aceita também o formato antigo (SHA-256 puro) para as contas existentes
+    continuarem entrando — e nesse caso pede para regravar no formato novo.
+    """
+    if not stored or password is None:
+        return False, False
+    if stored.startswith("pbkdf2_sha256$"):
+        try:
+            _, iterations, salt_b64, hash_b64 = stored.split("$")
+            digest = hashlib.pbkdf2_hmac(
+                "sha256", password.encode("utf-8"), base64.b64decode(salt_b64), int(iterations)
+            )
+            ok = hmac.compare_digest(base64.b64encode(digest).decode("ascii"), hash_b64)
+            return ok, ok and int(iterations) < PBKDF2_ITERATIONS
+        except (ValueError, TypeError):
+            return False, False
+    legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+    ok = hmac.compare_digest(legacy, stored)
+    return ok, ok
+
+
+def validate_new_password(password: str) -> Optional[str]:
+    """Mesmas regras do site: 8+ caracteres, letras e números."""
+    if not password or len(password) < 8:
+        return "A senha precisa ter pelo menos 8 caracteres."
+    if len(password) > 128:
+        return "A senha pode ter no máximo 128 caracteres."
+    if password.isdigit():
+        return "A senha não pode ser só de números."
+    if not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
+        return "Use letras e números na senha."
+    return None
 
 def init_db():
     """Inicializa as tabelas do banco de dados e popula com dados iniciais."""
@@ -92,6 +146,7 @@ def init_db():
         seed_initial_data(conn)
 
     # Verifica se a tabela de usuários está vazia para criar um usuário demonstrativo
+    remove_public_demo_account(conn)
     cursor.execute("SELECT COUNT(*) as count FROM users")
     if cursor.fetchone()["count"] == 0:
         seed_initial_users(conn)
@@ -99,19 +154,27 @@ def init_db():
     conn.close()
 
 def seed_initial_users(conn):
-    """Cria um usuário demonstrativo no banco de dados."""
+    """
+    Conta de demonstração: só é criada se a variável de ambiente
+    CINEBOOK_DEMO_PASSWORD estiver definida (nada de senha padrão pública
+    como "123456" embutida no código).
+    """
+    demo_password = os.environ.get("CINEBOOK_DEMO_PASSWORD")
+    if not demo_password:
+        return
     cursor = conn.cursor()
-    demo_user = (
-        "Pedro Aluno",
-        "pedro@cinebook.com",
-        hash_password("123456"),
-        "🚀",
-        "26/08/2026"
-    )
     cursor.execute("""
     INSERT INTO users (name, email, password_hash, avatar, created_at)
     VALUES (?, ?, ?, ?, ?)
-    """, demo_user)
+    """, ("Pedro Aluno", "pedro@cinebook.com", hash_password(demo_password), "🚀", "26/08/2026"))
+    conn.commit()
+
+
+def remove_public_demo_account(conn):
+    """Apaga a antiga conta de demonstração se ainda estiver com a senha 123456."""
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM users WHERE LOWER(email) = ? AND password_hash = ?",
+                   ("pedro@cinebook.com", LEGACY_DEMO_HASH))
     conn.commit()
 
 def seed_initial_data(conn):
@@ -564,6 +627,11 @@ def register_user(name: str, email: str, password: str, avatar: str = "🍿", pr
         conn.close()
         return {"success": False, "error": "Todos os campos são obrigatórios."}
 
+    password_error = validate_new_password(password)
+    if password_error:
+        conn.close()
+        return {"success": False, "error": password_error}
+
     # Verifica se o e-mail já está cadastrado
     cursor.execute("SELECT id FROM users WHERE email = ?", (email_clean,))
     if cursor.fetchone():
@@ -601,20 +669,27 @@ def login_user(email: str, password: str) -> Dict[str, Any]:
     conn = get_connection()
     cursor = conn.cursor()
 
-    identifier_clean = email.strip().lower()
-    hashed = hash_password(password)
+    identifier_clean = (email or "").strip().lower()
 
     cursor.execute("""
-    SELECT id, name, email, avatar, preferred_genres, created_at 
-    FROM users 
-    WHERE (LOWER(email) = ? OR LOWER(name) = ?) AND password_hash = ?
-    """, (identifier_clean, identifier_clean, hashed))
-    
-    row = cursor.fetchone()
-    conn.close()
+    SELECT id, name, email, avatar, preferred_genres, created_at, password_hash
+    FROM users
+    WHERE LOWER(email) = ? OR LOWER(name) = ?
+    """, (identifier_clean, identifier_clean))
 
-    if not row:
+    row = cursor.fetchone()
+    ok, needs_upgrade = verify_password(password or "", row["password_hash"]) if row else (False, False)
+
+    if not ok:
+        conn.close()
         return {"success": False, "error": "Usuário/E-mail ou senha incorretos."}
+
+    # Conta antiga (SHA-256 puro): regrava no formato novo agora que a senha
+    # foi conferida.
+    if needs_upgrade:
+        cursor.execute("UPDATE users SET password_hash = ? WHERE id = ?", (hash_password(password), row["id"]))
+        conn.commit()
+    conn.close()
 
     user = dict(row)
     pref_list = []
@@ -636,10 +711,25 @@ def login_user(email: str, password: str) -> Dict[str, Any]:
         }
     }
 
-def update_user_profile(user_id: int, name: Optional[str] = None, avatar: Optional[str] = None, new_password: Optional[str] = None, preferred_genres: Optional[List[str]] = None) -> Dict[str, Any]:
-    """Atualiza as informações do usuário (nome, avatar, categorias e/ou senha) no banco SQLite."""
+def update_user_profile(user_id: int, name: Optional[str] = None, avatar: Optional[str] = None, new_password: Optional[str] = None, preferred_genres: Optional[List[str]] = None, current_password: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Atualiza as informações do usuário (nome, avatar, categorias e/ou senha).
+    Para trocar a senha é obrigatório informar a senha atual.
+    """
     conn = get_connection()
     cursor = conn.cursor()
+
+    if new_password:
+        cursor.execute("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+        row = cursor.fetchone()
+        ok, _ = verify_password(current_password or "", row["password_hash"]) if row else (False, False)
+        if not ok:
+            conn.close()
+            return {"success": False, "error": "A senha atual está incorreta."}
+        password_error = validate_new_password(new_password)
+        if password_error:
+            conn.close()
+            return {"success": False, "error": password_error}
 
     fields = []
     params = []
@@ -656,7 +746,7 @@ def update_user_profile(user_id: int, name: Optional[str] = None, avatar: Option
         fields.append("preferred_genres = ?")
         params.append(json.dumps(preferred_genres))
 
-    if new_password and len(new_password) >= 4:
+    if new_password:
         fields.append("password_hash = ?")
         params.append(hash_password(new_password))
 

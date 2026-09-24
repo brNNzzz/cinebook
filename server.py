@@ -158,13 +158,14 @@ class CineBookHandler(http.server.SimpleHTTPRequestHandler):
             name = body.get("name")
             avatar = body.get("avatar")
             new_password = body.get("password")
+            current_password = body.get("currentPassword")
             preferred_genres = body.get("preferredCategories") or body.get("preferred_genres")
 
             if not user_id:
                 self.send_json_response(400, {"error": "ID de usuário obrigatório"})
                 return
 
-            result = database.update_user_profile(user_id, name, avatar, new_password, preferred_genres)
+            result = database.update_user_profile(user_id, name, avatar, new_password, preferred_genres, current_password)
             status_code = 200 if result["success"] else 400
             self.send_json_response(status_code, result)
             return

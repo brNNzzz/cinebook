@@ -370,36 +370,6 @@ function closeAuthModal() {
   modal.setAttribute('aria-hidden', 'true');
 }
 
-function getRegisteredUsers() {
-  try {
-    const list = JSON.parse(localStorage.getItem('cinebook_registered_users'));
-    if (Array.isArray(list) && list.length > 0) return list;
-  } catch (e) { }
-  const defaultList = [
-    {
-      id: 1,
-      name: 'pedro',
-      email: 'pedro@cinebook.com',
-      password: '123456',
-      avatar: '🍿',
-      createdAt: 'Conta Demo'
-    }
-  ];
-  localStorage.setItem('cinebook_registered_users', JSON.stringify(defaultList));
-  return defaultList;
-}
-
-function saveRegisteredUser(userRecord) {
-  const list = getRegisteredUsers();
-  const index = list.findIndex(u => u.email.toLowerCase() === userRecord.email.toLowerCase() || u.name.toLowerCase() === userRecord.name.toLowerCase());
-  if (index >= 0) {
-    list[index] = userRecord;
-  } else {
-    list.push(userRecord);
-  }
-  localStorage.setItem('cinebook_registered_users', JSON.stringify(list));
-}
-
 async function handleLoginSubmit(e) {
   e.preventDefault();
   const identifier = document.getElementById('loginEmail').value.trim();
@@ -417,8 +387,7 @@ async function handleLoginSubmit(e) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        AppState.currentUser = data.user;
-        localStorage.setItem('cinebook_user', JSON.stringify(data.user));
+        AppState.currentUser = typeof CineAuth !== 'undefined' ? CineAuth.setSession(data.user) : data.user;
         initAuthUI();
         closeAuthModal();
         showToast(`Bem-vindo de volta, ${data.user.name}! 🍿`);
@@ -433,34 +402,17 @@ async function handleLoginSubmit(e) {
     }
   }
 
-  // Verificação no registro de usuários
-  const registeredUsers = getRegisteredUsers();
-  const userMatch = registeredUsers.find(u =>
-    u.email.toLowerCase() === identifier.toLowerCase() ||
-    u.name.toLowerCase() === identifier.toLowerCase()
-  );
-
-  if (!userMatch) {
-    errorMsg.textContent = 'Nenhuma conta encontrada com este usuário ou e-mail. Crie uma conta primeiro.';
+  // Contas deste navegador: senha conferida por hash (js/auth.js)
+  if (typeof CineAuth === 'undefined') return;
+  await CineAuth.ready;
+  const result = await CineAuth.login(identifier, password);
+  if (!result.ok) {
+    errorMsg.textContent = result.error;
     errorMsg.style.display = 'block';
     return;
   }
-
-  if (userMatch.password !== password) {
-    errorMsg.textContent = 'Senha incorreta. Verifique sua senha e tente novamente.';
-    errorMsg.style.display = 'block';
-    return;
-  }
-
-  const sessionUser = {
-    id: userMatch.id,
-    name: userMatch.name,
-    email: userMatch.email,
-    avatar: userMatch.avatar || "🍿",
-    createdAt: userMatch.createdAt
-  };
+  const sessionUser = CineAuth.setSession(result.user);
   AppState.currentUser = sessionUser;
-  localStorage.setItem('cinebook_user', JSON.stringify(sessionUser));
   initAuthUI();
   closeAuthModal();
   showToast(`Logado como ${sessionUser.name}! 🍿`);
@@ -475,35 +427,20 @@ async function handleRegisterSubmit(e) {
 
   errorMsg.style.display = 'none';
 
-  if (password.length < 8) {
-    errorMsg.textContent = 'A senha precisa ter pelo menos 8 caracteres.';
+  if (typeof CineAuth === 'undefined') return;
+  await CineAuth.ready;
+  const created = await CineAuth.register({
+    name,
+    email,
+    password,
+    avatar: AppState.selectedAvatar || '🍿'
+  });
+  if (!created.ok) {
+    errorMsg.textContent = created.error;
     errorMsg.style.display = 'block';
     return;
   }
-
-  // Verifica se já existe localmente
-  const registeredUsers = getRegisteredUsers();
-  const alreadyExists = registeredUsers.some(u =>
-    u.email.toLowerCase() === email.toLowerCase() ||
-    u.name.toLowerCase() === name.toLowerCase()
-  );
-
-  if (alreadyExists) {
-    errorMsg.textContent = 'Este e-mail ou nome de usuário já está cadastrado. Faça login.';
-    errorMsg.style.display = 'block';
-    return;
-  }
-
-  const newUser = {
-    id: Date.now(),
-    name: name,
-    email: email,
-    password: password,
-    avatar: AppState.selectedAvatar || '🍿',
-    createdAt: new Date().toLocaleDateString('pt-BR')
-  };
-
-  saveRegisteredUser(newUser);
+  const newUser = created.user;
 
   if (AppState.backendOnline) {
     try {
@@ -519,8 +456,7 @@ async function handleRegisterSubmit(e) {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        AppState.currentUser = data.user;
-        localStorage.setItem('cinebook_user', JSON.stringify(data.user));
+        AppState.currentUser = typeof CineAuth !== 'undefined' ? CineAuth.setSession(data.user) : data.user;
         initAuthUI();
         closeAuthModal();
         showToast(`Conta criada com sucesso! Bem-vindo, ${name}! 🎉`);
@@ -531,15 +467,8 @@ async function handleRegisterSubmit(e) {
     }
   }
 
-  const sessionUser = {
-    id: newUser.id,
-    name: newUser.name,
-    email: newUser.email,
-    avatar: newUser.avatar,
-    createdAt: newUser.createdAt
-  };
+  const sessionUser = CineAuth.setSession(newUser);
   AppState.currentUser = sessionUser;
-  localStorage.setItem('cinebook_user', JSON.stringify(sessionUser));
   initAuthUI();
   closeAuthModal();
   showToast(`Cadastro realizado com sucesso! 🎉`);
@@ -557,6 +486,14 @@ function handleLogout() {
 // ==========================================
 async function checkBackendStatus() {
   const badge = document.getElementById('backendBadge');
+  // O backend Python só é usado quando é ele que está servindo o site
+  // (localhost:8000). Publicado (Netlify), o site não tenta falar com
+  // "localhost" do visitante — nem com dados de login, nem com nada.
+  if (AppState.apiBaseUrl !== window.location.origin) {
+    AppState.backendOnline = false;
+    if (badge) badge.style.display = 'none';
+    return;
+  }
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1200);

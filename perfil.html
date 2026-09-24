@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/data.js"></script>
   <script src="js/tmdb.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/i18n.js" defer></script>
 
   <!-- PWA -->
@@ -1204,6 +1205,11 @@
         </div>
 
         <div class="profile-form-group">
+          <label class="profile-form-label" for="editCurrentPasswordInput" data-i18n="profile_label_currentpass">Senha atual (só para trocar a senha)</label>
+          <input type="password" id="editCurrentPasswordInput" class="profile-form-input" autocomplete="current-password" placeholder="••••••••">
+        </div>
+
+        <div class="profile-form-group">
           <label class="profile-form-label" for="editPasswordInput" data-i18n="profile_label_newpass">Nova Senha (opcional)</label>
           <input type="password" id="editPasswordInput" class="profile-form-input" data-i18n-placeholder="profile_placeholder_newpass" placeholder="Deixe em branco para manter" autocomplete="new-password">
         </div>
@@ -1238,16 +1244,11 @@
       currentUser = JSON.parse(localStorage.getItem('cinebook_user'));
     } catch (e) {}
 
-    // Garante que haja uma sessão ativa padrão (não quebra nem desloga)
-    if (!currentUser) {
-      currentUser = {
-        name: "Pedro Silva",
-        email: "pedro@cinebook.com",
-        avatar: "🚀",
-        createdAt: "26/08/2026",
-        preferredCategories: ["Ação", "Ficção Científica", "Terror", "Animação"]
-      };
-      localStorage.setItem('cinebook_user', JSON.stringify(currentUser));
+    // Sem sessão = sem perfil: manda para o login e volta para cá depois.
+    // (Antes o site criava sozinho uma sessão falsa de "Pedro Silva".)
+    if (!currentUser || !(currentUser.email || currentUser.name)) {
+      window.location.replace('login.html?next=perfil.html');
+      currentUser = { name: '', email: '', avatar: '🍿', preferredCategories: [] };
     }
 
     let selectedAvatar = currentUser ? (currentUser.avatar || '🍿') : '🍿';
@@ -1796,39 +1797,57 @@
         return;
       }
 
-      try {
-        await fetch(`${apiBaseUrl}/api/user/update`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: currentUser.id,
-            name: newName,
-            avatar: selectedAvatar,
-            password: newPass || undefined,
-            preferredCategories: currentUser.preferredCategories || []
-          })
-        });
-      } catch (err) {
-        console.warn("Backend offline, atualizando localmente:", err);
+      const showProfileError = (msg) => {
+        feedbackBox.className = 'profile-feedback-box error';
+        feedbackBox.textContent = msg;
+        feedbackBox.style.display = 'block';
+      };
+
+      // Troca de senha: exige a senha atual e passa pelas mesmas regras do
+      // cadastro. A senha nova é guardada só como hash (js/auth.js).
+      const currentPassInput = document.getElementById('editCurrentPasswordInput');
+      const currentPass = currentPassInput ? currentPassInput.value : '';
+      if (newPass) {
+        if (!currentPass) {
+          showProfileError('Digite sua senha atual para definir uma nova senha.');
+          return;
+        }
+        const changed = await CineAuth.changePassword(currentUser.email, currentPass, newPass);
+        if (!changed.ok) {
+          showProfileError(changed.error);
+          return;
+        }
+      }
+
+      if (apiBaseUrl === window.location.origin) {
+        try {
+          await fetch(`${apiBaseUrl}/api/user/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: currentUser.id,
+              name: newName,
+              avatar: selectedAvatar,
+              password: newPass || undefined,
+              currentPassword: newPass ? currentPass : undefined,
+              preferredCategories: currentUser.preferredCategories || []
+            })
+          });
+        } catch (err) {
+          console.warn("Backend offline, atualizando localmente:", err);
+        }
       }
 
       currentUser.name = newName;
       currentUser.avatar = selectedAvatar;
-      localStorage.setItem('cinebook_user', JSON.stringify(currentUser));
-
-      try {
-        const users = JSON.parse(localStorage.getItem('cinebook_registered_users')) || [];
-        const idx = users.findIndex(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
-        if (idx >= 0) {
-          users[idx].name = newName;
-          users[idx].avatar = selectedAvatar;
-          users[idx].preferredCategories = currentUser.preferredCategories || [];
-          if (newPass && newPass.length >= 4) {
-            users[idx].password = newPass;
-          }
-          localStorage.setItem('cinebook_registered_users', JSON.stringify(users));
-        }
-      } catch (e) {}
+      CineAuth.setSession(currentUser);
+      CineAuth.updateProfile(currentUser.email, {
+        name: newName,
+        avatar: selectedAvatar,
+        preferredCategories: currentUser.preferredCategories || []
+      });
+      if (currentPassInput) currentPassInput.value = '';
+      document.getElementById('editPasswordInput').value = '';
 
       feedbackBox.className = 'profile-feedback-box success';
       feedbackBox.textContent = typeof t === 'function' ? (t('profile_toast_success') || 'Perfil e foto atualizados com sucesso! ✨') : 'Perfil e foto atualizados com sucesso! ✨';
