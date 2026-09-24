@@ -7,6 +7,8 @@ const TMDB_CONFIG = {
   // Chave padrão da API v3 (o usuário pode personalizar via localStorage['cinebook_tmdb_key'])
   DEFAULT_API_KEY: '844dba0bfd8f3a4f3799f6130ef9e335',
   BASE_URL: 'https://api.themoviedb.org/3',
+  // Mesmo endereço, mas passando pelo servidor do site (ver netlify.toml).
+  PROXY_PATH: '/tmdb-api',
   IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/w500',
   BACKDROP_BASE_URL: 'https://image.tmdb.org/t/p/original',
   
@@ -95,10 +97,36 @@ class TMDbService {
       ...params
     });
 
-    const url = `${TMDB_CONFIG.BASE_URL}${endpoint}?${queryParams.toString()}`;
+    const qs = queryParams.toString();
+    const directUrl = `${TMDB_CONFIG.BASE_URL}${endpoint}?${qs}`;
+    const proxyUrl = `${TMDB_CONFIG.PROXY_PATH}${endpoint}?${qs}`;
 
+    // 1) Proxy no próprio domínio (Netlify: netlify.toml encaminha /tmdb-api/*
+    //    para a TMDB pelo servidor). Resolve redes/provedores que bloqueiam
+    //    api.themoviedb.org direto do navegador — era isso que fazia a busca
+    //    e os detalhes voltarem vazios em alguns acessos.
+    if (this.getProxyState() !== 'off') {
+      try {
+        const res = await this.fetchWithTimeout(proxyUrl, 8000);
+        const isJson = (res.headers.get('content-type') || '').includes('json');
+        if (isJson) {
+          this.setProxyState('on');
+          if (res.ok) return await res.json();
+          // A TMDB respondeu (pelo proxy) que não achou / recusou: não adianta
+          // repetir a mesma pergunta direto.
+          console.warn(`[TMDb API] ${endpoint}: HTTP ${res.status}`);
+          return null;
+        }
+        // Resposta HTML = não existe proxy neste servidor (ex.: servidor local).
+        this.setProxyState('off');
+      } catch (error) {
+        // Timeout ou rede: tenta direto logo abaixo, sem desligar o proxy.
+      }
+    }
+
+    // 2) Direto na API da TMDB.
     try {
-      const response = await fetch(url);
+      const response = await this.fetchWithTimeout(directUrl, 10000);
       if (!response.ok) {
         throw new Error(`Erro TMDb HTTP ${response.status}`);
       }
@@ -107,6 +135,28 @@ class TMDbService {
       console.warn(`[TMDb API] Falha na rota ${endpoint}:`, error.message);
       return null;
     }
+  }
+
+  async fetchWithTimeout(url, ms) {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = controller ? setTimeout(() => controller.abort(), ms) : null;
+    try {
+      return await fetch(url, controller ? { signal: controller.signal } : undefined);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  /** 'on' | 'off' | 'unknown' — lembrado durante a sessão da aba. */
+  getProxyState() {
+    if (this._proxyState) return this._proxyState;
+    try { this._proxyState = sessionStorage.getItem('cinebook_tmdb_proxy') || 'unknown'; } catch (_) { this._proxyState = 'unknown'; }
+    return this._proxyState;
+  }
+
+  setProxyState(state) {
+    this._proxyState = state;
+    try { sessionStorage.setItem('cinebook_tmdb_proxy', state); } catch (_) {}
   }
 
   /**
@@ -410,6 +460,9 @@ class TMDbService {
 
     const year = (raw.release_date || raw.first_air_date || '').split('-')[0] || '2024';
     const ratingScore = Math.round((raw.vote_average || 0) * 10);
+    const releaseInfo = typeof computeReleaseStatus === 'function'
+      ? computeReleaseStatus(raw.release_date || raw.first_air_date || null, isTv ? 'series' : 'movie', raw.status)
+      : { releaseDateFull: raw.release_date || raw.first_air_date || null, notReleasedYet: false, inTheaters: false };
 
     return {
       id: `tmdb_${raw.id}`,
@@ -418,7 +471,12 @@ class TMDbService {
       title: raw.title || raw.name || 'Sem Título',
       originalTitle: raw.original_title || raw.original_name || '',
       year: parseInt(year, 10) || 2024,
-      rating: ratingScore > 0 ? ratingScore : 80,
+      // Sem votos na TMDB = sem nota. Antes inventava 80% para qualquer obra
+      // sem avaliação, inclusive filmes que nem estrearam.
+      rating: (raw.vote_count || 0) > 0 ? ratingScore : 0,
+      releaseDateFull: releaseInfo.releaseDateFull,
+      notReleasedYet: releaseInfo.notReleasedYet,
+      inTheaters: releaseInfo.inTheaters,
       duration: isTv ? 'Série de TV' : 'Filme',
       director: isTv ? 'Produção TMDb' : 'Direção TMDb',
       genres: genres.length > 0 ? genres : ['Cinema', 'Destaque'],
@@ -665,33 +723,18 @@ class TMDbService {
 
     // 8. Status de lançamento: ainda não lançado? já está em cartaz no cinema?
     // Baseado no campo real "status" da TMDB e na data de lançamento — nunca
-    // em suposição. Usado para esconder avaliações, "onde assistir/ler" e
-    // trailer fictício de obras que não saíram ainda, e para mostrar a opção
-    // de comprar ingresso só quando o filme está mesmo em cartaz.
+    // em suposição. A regra fica em data.js (computeReleaseStatus) para os
+    // dados locais e os da TMDB seguirem exatamente o mesmo critério.
     const releaseDateStr = raw.release_date || raw.first_air_date || null;
-    base.releaseDateFull = releaseDateStr || null;
-
-    const UPCOMING_STATUSES = ['Planned', 'In Production', 'Post Production', 'Rumored'];
-    let releaseDateObj = null;
-    if (releaseDateStr) {
-      const parsed = new Date(`${releaseDateStr}T00:00:00`);
-      if (!isNaN(parsed.getTime())) releaseDateObj = parsed;
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    base.notReleasedYet = UPCOMING_STATUSES.includes(raw.status) ||
-      (releaseDateObj !== null && releaseDateObj > today);
-
-    // "Em cartaz": só para filmes (não séries/livros), já lançados, dentro de
-    // uma janela recente de exibição em salas de cinema.
-    const DIAS_EM_CARTAZ = 60;
-    if (!isTv && !base.notReleasedYet && releaseDateObj !== null) {
-      const diffDias = Math.floor((today - releaseDateObj) / 86400000);
-      base.inTheaters = diffDias >= 0 && diffDias <= DIAS_EM_CARTAZ;
+    if (typeof computeReleaseStatus === 'function') {
+      Object.assign(base, computeReleaseStatus(releaseDateStr, isTv ? 'series' : 'movie', raw.status));
     } else {
+      base.releaseDateFull = releaseDateStr;
+      base.notReleasedYet = ['Planned', 'In Production', 'Post Production', 'Rumored'].includes(raw.status);
       base.inTheaters = false;
     }
+    if (base.notReleasedYet) base.rating = 0;
+    base._tmdbDetailed = true;
 
     return base;
   }

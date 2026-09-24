@@ -75,6 +75,10 @@ async function loadMediaDetails(mediaId) {
     // verdade pra elenco, trailer e onde assistir — nunca cai de volta pro
     // dado cadastrado à mão localmente só porque a TMDB não confirmou nada,
     // senão um trailer/streaming de exemplo (fictício) sobrevive escondido.
+    // Se a TMDB falhar (rede, bloqueio, limite de requisições), o item local
+    // já vem com o status de lançamento calculado pela data cadastrada em
+    // data.js — então um filme não lançado continua sem nota/avaliações/
+    // onde assistir mesmo sem a TMDB responder.
     const full = await TMDB.getDetails(item.tmdbId, item.type);
     if (full) {
       item = {
@@ -84,9 +88,12 @@ async function loadMediaDetails(mediaId) {
         whereToWatch: full.whereToWatch || [],
         backdrop: item.backdrop || full.backdrop,
         poster: item.poster || full.poster,
-        releaseDateFull: full.releaseDateFull,
+        rating: full.rating,
+        year: full.year || item.year,
+        releaseDateFull: full.releaseDateFull || item.releaseDateFull,
         notReleasedYet: full.notReleasedYet,
-        inTheaters: full.inTheaters
+        inTheaters: full.inTheaters,
+        _tmdbDetailed: true
       };
     }
   }
@@ -328,16 +335,33 @@ function renderDetailsUI(item, lang) {
   const translatedGenres = [...new Set(rawGenres)];
   if (genresEl) genresEl.textContent = (translatedGenres.length > 0 ? translatedGenres : ['Cinema']).join(', ');
 
-  // Avaliação do Público
-  const ratingScore = item.rating || 80;
-  if (scoreCircle) {
-    const strokeColor = ratingScore >= 80 ? '#1ed5a9' : (ratingScore >= 60 ? '#f59e0b' : '#ef4444');
-    scoreCircle.setAttribute('stroke', strokeColor);
-    scoreCircle.setAttribute('stroke-dasharray', `${ratingScore}, 100`);
-  }
-  if (scoreText) scoreText.innerHTML = `${ratingScore}<sup>%</sup>`;
+  // Avaliação do Público — obra não lançada não tem nota de público (ninguém
+  // assistiu ainda). No lugar aparece a data de estreia.
+  const tr = (key, fallback) => (typeof t === 'function' && t(key) && t(key) !== key) ? t(key) : fallback;
   const scoreLabel = document.querySelector('.details-score-label');
-  if (scoreLabel) scoreLabel.textContent = typeof t === 'function' ? t('lbl_user_score') : 'Avaliação do Público';
+  const scoreBadge = scoreCircle ? scoreCircle.closest('.score-badge') : null;
+  if (item.notReleasedYet) {
+    const dateTxt = typeof formatReleaseDateBR === 'function' ? formatReleaseDateBR(item.releaseDateFull) : '';
+    if (scoreBadge) scoreBadge.style.display = 'none';
+    if (scoreLabel) {
+      scoreLabel.textContent = dateTxt
+        ? `📅 ${tr('lbl_premiere', 'Estreia')}: ${dateTxt}`
+        : `📅 ${tr('status_coming_soon', 'Em breve')}`;
+    }
+  } else if (!item.rating) {
+    if (scoreBadge) scoreBadge.style.display = 'none';
+    if (scoreLabel) scoreLabel.textContent = tr('lbl_no_ratings_yet', 'Sem avaliações ainda');
+  } else {
+    const ratingScore = item.rating;
+    if (scoreBadge) scoreBadge.style.display = '';
+    if (scoreCircle) {
+      const strokeColor = ratingScore >= 80 ? '#1ed5a9' : (ratingScore >= 60 ? '#f59e0b' : '#ef4444');
+      scoreCircle.setAttribute('stroke', strokeColor);
+      scoreCircle.setAttribute('stroke-dasharray', `${ratingScore}, 100`);
+    }
+    if (scoreText) scoreText.innerHTML = `${ratingScore}<sup>%</sup>`;
+    if (scoreLabel) scoreLabel.textContent = tr('lbl_user_score', 'Avaliação do Público');
+  }
 
   // Atualiza rótulos dos botões de Watchlist
   const favEl = document.getElementById('lblActionFavorite');
@@ -560,7 +584,9 @@ function renderDetailsUI(item, lang) {
   document.getElementById('techOriginalTitle').textContent = item.originalTitle || item.title || '-';
   document.getElementById('techDirector').textContent = item.director || item.publisher || '-';
   document.getElementById('techReleaseYear').textContent = item.year || '-';
-  document.getElementById('techStatus').textContent = typeof t === 'function' ? t('tech_status_released') : 'Lançado / Disponível';
+  document.getElementById('techStatus').textContent = item.notReleasedYet
+    ? tr('tech_status_upcoming', 'Ainda não lançado')
+    : (item.inTheaters ? tr('tech_status_in_theaters', 'Em cartaz nos cinemas') : tr('tech_status_released', 'Lançado / Disponível'));
   document.getElementById('techDurationFormat').textContent = durText;
 
   // Seção de Avaliações e Recomendações (Títulos e Formulário)
@@ -952,7 +978,7 @@ function initStarRating() {
  */
 async function saveReview() {
   const item = DetailsState.currentMedia;
-  if (!item) return;
+  if (!item || item.notReleasedYet) return;
 
   const commentInput = document.getElementById('detailsReviewComment');
   const comment = (commentInput?.value || '').trim();

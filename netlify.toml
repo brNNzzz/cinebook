@@ -1,0 +1,100 @@
+# ==============================================================================
+# CineBook — configuração equivalente ao .htaccess, para hospedagem no Netlify
+# ==============================================================================
+# O .htaccess do kit é exclusivo do Apache (Hostinger) e o Netlify o ignora
+# por completo. Este arquivo faz o mesmo trabalho na sintaxe do Netlify.
+#
+# Onde fica: na RAIZ do projeto que você publica (mesma pasta do
+# index.html e do manifest.json). Já vem dentro do zip do projeto.
+# ==============================================================================
+
+[[headers]]
+  # O service worker NUNCA pode ficar em cache — é ele quem controla a
+  # atualização de todo o resto. Sem isto, o Netlify pode servir uma versão
+  # velha do sw.js e o site nunca se atualiza para quem já visitou antes.
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# JS e CSS: o navegador sempre confere com o servidor se há versão nova (é
+# rápido — se nada mudou, volta um "304" sem baixar de novo). Antes estava
+# 30 dias de cache: depois de um deploy, quem já tinha aberto o site seguia
+# rodando o código antigo por até um mês.
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# ==============================================================================
+# Proxy da API do TMDb
+# ==============================================================================
+# O site chama /tmdb-api/... no próprio domínio e o Netlify repassa para
+# https://api.themoviedb.org/3/... pelo servidor dele. Assim a busca e os
+# detalhes funcionam mesmo em redes/provedores que bloqueiam o acesso direto
+# do navegador à TMDB. Se o proxy falhar, o js/tmdb.js tenta direto.
+[[redirects]]
+  from = "/tmdb-api/*"
+  to = "https://api.themoviedb.org/3/:splat"
+  status = 200
+  force = true
+
+# ==============================================================================
+# Bloqueio de arquivos sensíveis
+# ==============================================================================
+# O Netlify só serve arquivos estáticos — .py e .db não têm função nenhuma
+# aqui (não existe processo Python rodando). Se estiverem na pasta publicada,
+# ficam disponíveis pra download livre, incluindo o banco com e-mails e
+# senhas. O ideal é nem publicar esses arquivos (veja a nota abaixo); estas
+# regras são uma segunda camada de proteção caso acabem indo junto.
+
+[[redirects]]
+  from = "/cinebook.db"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/database.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/server.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/app_flask.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/requirements.txt"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/test_perfil_server.py"
+  to = "/404.html"
+  status = 404
+  force = true

@@ -4,8 +4,11 @@
  * Estratégias por tipo de recurso:
  *
  *   Navegação (páginas)   -> network-first, cai pro cache, depois offline.html
- *   Estáticos same-origin -> stale-while-revalidate (atualiza em segundo plano)
+ *   JS / CSS / JSON       -> network-first (deploy novo aparece na hora; o
+ *                            cache só entra quando estiver offline)
+ *   Outros estáticos      -> stale-while-revalidate (ícones, logo...)
  *   API do TMDb           -> network-first (nunca serve catálogo velho de cara)
+ *                            — tanto direto quanto pelo proxy /tmdb-api/
  *   Imagens do TMDb       -> cache-first com teto de entradas
  *   Fontes / bandeiras    -> cache-first
  *   Qualquer outra origem -> passa direto, o SW não intercepta
@@ -16,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.1.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -251,18 +254,27 @@ async function staleWhileRevalidate(request, cacheName) {
   throw new Error('Recurso indisponível offline: ' + request.url);
 }
 
-/** API: rede primeiro. Só usa cache se a rede falhar (offline). */
-async function networkFirst(request, cacheName, limit) {
+/**
+ * Rede primeiro. Só usa cache se a rede falhar (offline) ou passar do tempo
+ * limite — assim uma conexão travada não deixa a página esperando pra sempre.
+ */
+async function networkFirst(request, cacheName, limit, timeoutMs) {
   const cache = await caches.open(cacheName);
   try {
-    const fresh = await fetch(request);
+    const networkPromise = fetch(request);
+    const fresh = timeoutMs
+      ? await Promise.race([
+          networkPromise,
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
+        ])
+      : await networkPromise;
     if (fresh && fresh.ok) {
       await cache.put(request, await cleanResponse(fresh.clone()));
-      trimCache(cacheName, limit);
+      if (limit) trimCache(cacheName, limit);
     }
     return fresh;
   } catch (err) {
-    const cached = await cache.match(request);
+    const cached = await cache.match(request, { ignoreSearch: request.url.includes('/js/') || request.url.includes('/css/') });
     if (cached) return cached;
     throw err;
   }
@@ -327,7 +339,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ---- Estáticos do próprio site ----
+  // ---- Proxy do TMDb no próprio domínio (Netlify: /tmdb-api/*) ----
+  if (url.origin === self.location.origin && url.pathname.startsWith('/tmdb-api/')) {
+    event.respondWith(networkFirst(request, CACHE_API, API_CACHE_LIMIT));
+    return;
+  }
+
+  // ---- Código e estilo do próprio site: sempre a versão publicada ----
+  // Antes era stale-while-revalidate: depois de um deploy, quem já tinha
+  // visitado continuava rodando o JavaScript antigo até recarregar de novo.
+  if (url.origin === self.location.origin && /\.(js|css|json)$/i.test(url.pathname)) {
+    event.respondWith(networkFirst(request, CACHE_STATIC, null, 6000));
+    return;
+  }
+
+  // ---- Outros estáticos do próprio site (ícones, imagens) ----
   if (url.origin === self.location.origin) {
     event.respondWith(
       staleWhileRevalidate(request, CACHE_STATIC).catch(() => fetch(request))

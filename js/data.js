@@ -2375,6 +2375,109 @@ const MEDIA_DATABASE = [
 ];
 
 /**
+ * ---------------------------------------------------------------------------
+ * Status de lançamento (lançado / em cartaz / ainda não lançado)
+ * ---------------------------------------------------------------------------
+ * A TMDB continua sendo a fonte de verdade: quando ela responde, os campos
+ * calculados aqui são sobrescritos pelos dela (ver tmdb.js > formatDetails).
+ * Estas datas existem para o caso da TMDB falhar ou demorar — sem elas, um
+ * filme que ainda nem estreou aparecia com nota do público, avaliações e
+ * "onde assistir" inventados.
+ *
+ * Datas de estreia no Brasil (ou mundial, quando não há data BR divulgada),
+ * conferidas em setembro/2026. Atualize aqui se algum estúdio mudar a data.
+ */
+const CINEMA_WINDOW_DAYS = 60;
+
+const LOCAL_RELEASE_DATES = {
+  m_2026_odrama: '2026-04-02',
+  m_2026_exterminio: '2026-01-15',
+  m_2026_spiderman4: '2026-07-30',
+  m_2026_devoradores: '2026-03-19',
+  m_2026_obsessao: '2026-05-14',
+  m_2026_michael: '2026-04-23',
+  m_2026_batman: '2028-02-18',
+  m_2026_secretwars: '2027-12-17',
+  m_2026_spiderverse: '2027-06-18',
+  m_2026_superman: '2025-07-10',
+  m_2026_toystory5: '2026-06-18',
+  m_2026_avatar3: '2025-12-18',
+  m_2026_tron: '2025-10-09',
+  m_2026_conjuring: '2025-09-04',
+  m_2026_scream7: '2026-02-26',
+  m_2026_mickey17: '2025-03-06',
+  m_2026_knivesout3: '2025-12-12',
+  m_2026_zootopia2: '2025-11-27',
+  m_2026_shrek5: '2027-06-30',
+  m_2026_mario2: '2026-04-02'
+};
+
+/**
+ * Calcula o status a partir de uma data "AAAA-MM-DD" e (opcional) do status
+ * da TMDB. Usado tanto pelos dados locais quanto pela TMDB, para as duas
+ * fontes seguirem exatamente a mesma regra.
+ */
+function computeReleaseStatus(dateStr, type, tmdbStatus) {
+  const UPCOMING_STATUSES = ['Planned', 'In Production', 'Post Production', 'Rumored'];
+  let releaseDateObj = null;
+  if (dateStr) {
+    const parsed = new Date(`${dateStr}T00:00:00`);
+    if (!isNaN(parsed.getTime())) releaseDateObj = parsed;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const notReleasedYet = UPCOMING_STATUSES.includes(tmdbStatus) ||
+    (releaseDateObj !== null && releaseDateObj > today);
+
+  let inTheaters = false;
+  if (type === 'movie' && !notReleasedYet && releaseDateObj !== null) {
+    const diffDias = Math.floor((today - releaseDateObj) / 86400000);
+    inTheaters = diffDias >= 0 && diffDias <= CINEMA_WINDOW_DAYS;
+  }
+
+  return { releaseDateFull: dateStr || null, notReleasedYet, inTheaters };
+}
+
+/** Formata "2027-12-17" como "17/12/2027". */
+function formatReleaseDateBR(dateStr) {
+  if (!dateStr || !/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return '';
+  const [y, m, d] = dateStr.slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// Trailers de exemplo repetidos em várias obras diferentes (o mesmo vídeo
+// cadastrado em 5, 10 títulos) não são o trailer de nenhuma delas.
+const PLACEHOLDER_TRAILER_IDS = (() => {
+  const counts = {};
+  MEDIA_DATABASE.forEach(item => {
+    if (item.trailerUrl) counts[item.trailerUrl] = (counts[item.trailerUrl] || 0) + 1;
+  });
+  return new Set(Object.keys(counts).filter(url => counts[url] > 1));
+})();
+
+// Aplica as datas locais no catálogo assim que o arquivo carrega.
+MEDIA_DATABASE.forEach(item => {
+  if (item.trailerUrl && PLACEHOLDER_TRAILER_IDS.has(item.trailerUrl)) {
+    item.trailerUrl = '';
+  }
+
+  const dateStr = LOCAL_RELEASE_DATES[item.id];
+  if (!dateStr) return;
+  item.releaseDate = dateStr;
+  item.year = Number(dateStr.slice(0, 4));
+  Object.assign(item, computeReleaseStatus(dateStr, item.type));
+  // Obra que ainda não estreou não tem trailer confirmado nem onde assistir
+  // só porque alguém cadastrou um exemplo à mão — se houver trailer real, a
+  // TMDB devolve ele quando a página consulta.
+  if (item.notReleasedYet) {
+    item.whereToWatch = [];
+    item.trailerUrl = '';
+    item.rating = 0; // ninguém assistiu ainda: não existe nota do público
+  }
+});
+
+/**
  * CineBook - Motor Inteligente de Avaliações Personalizadas por Obra
  * Garante que cada filme, série e livro possua avaliações únicas, autênticas e específicas.
  */

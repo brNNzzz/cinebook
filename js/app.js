@@ -645,7 +645,7 @@ const HeroCarousel = {
     }
 
     // Filtra EXCLUSIVAMENTE os filmes e produções de 2026 mais populares e em alta
-    let pool2026 = pool.filter(m => Number(m.year) === 2026 || (m.year && String(m.year).includes('2026')));
+    let pool2026 = pool.filter(isCatalogHighlight);
 
     // Se na aba ativa (ex: livros) houver poucos itens de 2026, complementa com os lançamentos mais recentes
     if (pool2026.length < 3) {
@@ -803,17 +803,25 @@ const HeroCarousel = {
     }).filter(Boolean);
     if (genreVal) genreVal.textContent = (translatedGenres.length > 0 ? translatedGenres : ['Cinema']).slice(0, 2).join(', ');
 
-    // Avaliações de 0 a 10
-    const ratingNum = typeof item.rating === 'number' ? item.rating : 80;
-    const pubScoreNum = (ratingNum / 10).toFixed(1).replace('.', ',');
-    const critScoreNum = Math.min((ratingNum + 3) / 10, 10).toFixed(1).replace('.', ',');
-    const pubPct = ratingNum;
-    const critPct = Math.min(ratingNum + 3, 100);
-
-    if (publicScore) publicScore.textContent = `${pubScoreNum}/10`;
-    if (publicBar) publicBar.style.width = `${pubPct}%`;
-    if (criticScore) criticScore.textContent = `${critScoreNum}/10`;
-    if (criticBar) criticBar.style.width = `${critPct}%`;
+    // Avaliações de 0 a 10 — obra não lançada (ou sem nenhum voto) não tem
+    // nota: as barras ficam vazias e o texto diz isso, em vez de um 8,5 inventado.
+    const ratingNum = typeof item.rating === 'number' ? item.rating : 0;
+    if (item.notReleasedYet || !ratingNum) {
+      const noScoreTxt = item.notReleasedYet
+        ? ((typeof t === 'function' && t('status_coming_soon') !== 'status_coming_soon') ? t('status_coming_soon') : 'Em breve')
+        : '—';
+      if (publicScore) publicScore.textContent = noScoreTxt;
+      if (publicBar) publicBar.style.width = '0%';
+      if (criticScore) criticScore.textContent = noScoreTxt;
+      if (criticBar) criticBar.style.width = '0%';
+    } else {
+      const pubScoreNum = (ratingNum / 10).toFixed(1).replace('.', ',');
+      const critScoreNum = Math.min((ratingNum + 3) / 10, 10).toFixed(1).replace('.', ',');
+      if (publicScore) publicScore.textContent = `${pubScoreNum}/10`;
+      if (publicBar) publicBar.style.width = `${ratingNum}%`;
+      if (criticScore) criticScore.textContent = `${critScoreNum}/10`;
+      if (criticBar) criticBar.style.width = `${Math.min(ratingNum + 3, 100)}%`;
+    }
 
     if (descriptionText) descriptionText.textContent = displaySynopsis || item.tagline || (typeof t === 'function' ? t('hero_subtitle') : 'Acompanhe esta produção aclamada no catálogo CineBook.');
 
@@ -1078,11 +1086,30 @@ function getFilteredPeople() {
   return list;
 }
 
+/**
+ * Itens do "catálogo 2026": tudo o que está cadastrado localmente (curadoria,
+ * que agora tem o ano real de estreia — 2025, 2027...) mais o que vem da TMDB
+ * com ano de 2026 em diante.
+ */
+function isCatalogHighlight(m) {
+  if (typeof MEDIA_DATABASE !== 'undefined' && MEDIA_DATABASE.some(local => local.id === m.id)) return true;
+  return Number(m.year) >= 2026;
+}
+
+/** Minúsculas e sem acento: "Ação" e "acao" passam a bater na busca. */
+function normalizeSearchText(txt) {
+  return String(txt || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
 function getFilteredMedia() {
   let list = [...AppState.mediaList];
+  const isSearching = AppState.searchQuery.trim() !== '';
 
   if (AppState.activeTab === 'movie') {
-    list = list.filter(item => item.type === 'movie' && (Number(item.year) === 2026 || String(item.year).includes('2026')));
+    // Sem busca: vitrine de lançamentos. Com busca: QUALQUER filme — antes a
+    // aba Filmes jogava fora todo resultado da TMDB que não fosse de 2026,
+    // então pesquisar "Interestelar" ou "Titanic" não mostrava nada.
+    list = list.filter(item => item.type === 'movie' && (isSearching || isCatalogHighlight(item)));
   } else if (AppState.activeTab === 'series') {
     list = list.filter(item => item.type === 'series');
   } else if (AppState.activeTab === 'book') {
@@ -1112,12 +1139,17 @@ function getFilteredMedia() {
     list = watchlistItems;
   }
 
-  if (AppState.searchQuery.trim() !== '') {
-    const query = AppState.searchQuery.toLowerCase();
+  if (isSearching) {
+    const query = normalizeSearchText(AppState.searchQuery);
     list = list.filter(item => {
-      const matchTitle = item.title.toLowerCase().includes(query) || (item.originalTitle && item.originalTitle.toLowerCase().includes(query));
-      const matchDirector = item.director && item.director.toLowerCase().includes(query);
-      const matchGenres = item.genres && item.genres.some(g => g.toLowerCase().includes(query));
+      // Resultado que veio da própria busca da TMDB para este termo já é
+      // relevante (ela acha por título alternativo, título em outro idioma
+      // etc.), mesmo que o texto não apareça literalmente no título em pt-BR.
+      if (item._searchQuery && normalizeSearchText(item._searchQuery) === query) return true;
+      const localTitle = typeof getMediaTitle === 'function' ? getMediaTitle(item) : '';
+      const matchTitle = [item.title, item.originalTitle, localTitle].some(txt => normalizeSearchText(txt).includes(query));
+      const matchDirector = normalizeSearchText(item.director).includes(query);
+      const matchGenres = (item.genres || []).some(g => normalizeSearchText(g).includes(query));
       return matchTitle || matchDirector || matchGenres;
     });
   }
@@ -1310,6 +1342,8 @@ function renderGrid() {
 
     const scoreColor = item.rating >= 80 ? 'var(--score-high)' : (item.rating >= 60 ? 'var(--score-mid)' : 'var(--score-low)');
     const strokeDash = `${item.rating}, 100`;
+    const comingSoonTxt = (typeof t === 'function' && t('status_coming_soon') !== 'status_coming_soon') ? t('status_coming_soon') : 'Em breve';
+    const releaseTxt = item.notReleasedYet && typeof formatReleaseDateBR === 'function' ? formatReleaseDateBR(item.releaseDateFull) : '';
 
     const currentL = localStorage.getItem('cinebook_lang') || 'pt';
 
@@ -1368,6 +1402,10 @@ function renderGrid() {
           onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';"
         />
 
+        ${item.notReleasedYet ? `
+        <div class="coming-soon-badge" title="${comingSoonTxt}${releaseTxt ? ' • ' + releaseTxt : ''}">
+          <span>📅 ${comingSoonTxt}</span>${releaseTxt ? `<small>${releaseTxt}</small>` : ''}
+        </div>` : (item.rating ? `
         <div class="score-badge" title="Avaliação: ${item.rating}%">
           <svg viewBox="0 0 36 36">
             <circle class="score-bg" cx="18" cy="18" r="15.5"></circle>
@@ -1381,7 +1419,7 @@ function renderGrid() {
             ></circle>
           </svg>
           <div class="score-text">${item.rating}<sup>%</sup></div>
-        </div>
+        </div>` : '')}
       </div>
 
       <div class="card-content">
@@ -1691,13 +1729,15 @@ async function openModal(mediaId) {
   // hardcoded localmente com elenco/trailer de exemplo) passe pelo menos uma
   // vez pela TMDB antes de mostrar avaliação, trailer ou "onde assistir" —
   // sem isso, dados de exemplo cadastrados à mão nunca eram corrigidos.
-  if (typeof TMDB !== 'undefined' && item.tmdbId && (
-    !item.cast || item.cast.length === 0 ||
-    typeof item.notReleasedYet === 'undefined'
-  )) {
+  if (typeof TMDB !== 'undefined' && item.tmdbId && !item._tmdbDetailed) {
     const fullDetails = await TMDB.getDetails(item.tmdbId, item.type);
     if (fullDetails) {
+      // Mantém o id local (m_2026_...): é por ele que a lista e as avaliações
+      // do usuário ficam salvas. Sem isso o item virava "tmdb_123" no meio do
+      // caminho e perdia o vínculo com o que já estava salvo.
+      const keepId = item.id;
       Object.assign(item, fullDetails);
+      item.id = keepId;
       // A TMDB é a fonte de verdade pra estes três campos: nunca deixa um
       // trailer, streaming ou elenco de exemplo cadastrado à mão sobreviver
       // à checagem só porque a TMDB não confirmou nada (undefined não
@@ -2285,10 +2325,18 @@ function initEventListeners() {
             renderGrid();
           }
         } else {
-          const tmdbResults = await TMDB.search(AppState.searchQuery);
+          const queryAtRequest = AppState.searchQuery;
+          const tmdbResults = await TMDB.search(queryAtRequest);
+          // O usuário continuou digitando: descarta a resposta antiga.
+          if (queryAtRequest !== AppState.searchQuery) return;
           if (tmdbResults && tmdbResults.length > 0) {
             tmdbResults.forEach(r => {
-              if (!AppState.mediaList.some(m => m.id === r.id)) {
+              const existing = AppState.mediaList.find(m => m.id === r.id ||
+                (m.tmdbId && String(m.tmdbId) === String(r.tmdbId) && m.type === r.type));
+              if (existing) {
+                existing._searchQuery = queryAtRequest;
+              } else {
+                r._searchQuery = queryAtRequest;
                 AppState.mediaList.push(r);
               }
             });
