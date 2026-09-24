@@ -4790,3 +4790,62 @@ body {
   .legal-toc { position: static; flex-direction: row; flex-wrap: wrap; gap: 0.5rem 1rem; }
   .legal-toc-title { width: 100%; }
 }
+
+/* ==========================================================================
+   AVALIAÇÕES REAIS (js/reviews.js)
+   ========================================================================== */
+.rv-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.rv-group-title:first-child { margin-top: 0; }
+.rv-group-title span {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  letter-spacing: 0;
+}
+.rv-note { margin: -0.35rem 0 0.75rem; font-size: 0.82rem; color: var(--text-muted); }
+.rv-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  margin-bottom: 0.9rem;
+}
+.rv-head { display: flex; align-items: center; gap: 0.75rem; }
+.rv-avatar {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(3, 180, 228, 0.25), rgba(30, 213, 169, 0.3));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8; font-weight: 700; font-size: 0.8rem;
+}
+.rv-who { flex: 1; min-width: 0; }
+.rv-who strong { display: block; color: #fff; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-who small { color: var(--text-muted); font-size: 0.78rem; }
+.rv-badge { color: #94a3b8; }
+.rv-badge-cb { color: #1ed5a9; }
+.rv-stars { color: #f59e0b; letter-spacing: 2px; font-size: 1rem; white-space: nowrap; }
+.rv-body { margin-top: 0.75rem; color: #cbd5e1; font-size: 0.93rem; line-height: 1.65; overflow-wrap: anywhere; }
+.rv-body p { margin: 0 0 0.6rem; }
+.rv-body p:last-child { margin-bottom: 0; }
+.rv-compact { font-size: 0.86rem; }
+.rv-actions { display: flex; gap: 1rem; margin-top: 0.6rem; }
+.rv-more {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: #38bdf8; font-weight: 600; font-size: 0.85rem;
+}
+.rv-link { color: #94a3b8; font-size: 0.85rem; text-decoration: none; }
+.rv-link:hover, .rv-more:hover { color: #1ed5a9; }
+.rv-empty { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem; margin: 0; }

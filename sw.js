@@ -60,6 +60,7 @@ const STATIC_ASSETS = [
   '/js/tmdb.js',
   '/js/books.js',
   '/js/auth.js',
+  '/js/reviews.js',
   '/js/app.js',
   '/js/details.js',
   '/js/pwa.js',

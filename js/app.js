@@ -55,15 +55,11 @@ const AppState = {
     return {};
   })(),
 
-  // Resenhas locais de backup
-  reviews: JSON.parse(localStorage.getItem('cinebook_reviews')) || {
-    "m1": [
-      { userName: "Pedro Aluno", userAvatar: "🚀", rating: 5, comment: "Cinematografia espetacular e trilha sonora imersiva de Hans Zimmer! Obra-prima.", date: "25/08/2026" }
-    ],
-    "s1": [
-      { userName: "Maria Silva", userAvatar: "🍿", rating: 5, comment: "Melhor adaptação de videogame da história da televisão.", date: "24/08/2026" }
-    ]
-  }
+  // Avaliações feitas na página inicial (formato antigo). As novas ficam
+  // por obra — ver js/reviews.js.
+  reviews: (() => {
+    try { return JSON.parse(localStorage.getItem('cinebook_reviews')) || {}; } catch (e) { return {}; }
+  })()
 };
 
 // ==========================================
@@ -2092,60 +2088,10 @@ function resetReviewForm() {
 
 function renderReviewsList(mediaId) {
   const container = document.getElementById('modalReviewsList');
-  if (!container) return;
-
-  const item = AppState.currentModalMedia || (typeof MEDIA_DATABASE !== 'undefined' ? MEDIA_DATABASE.find(m => m.id === mediaId) : null) || { id: mediaId, title: 'Esta Obra' };
-  const userSavedReviews = AppState.reviews[mediaId] || [];
-
-  // Pega as avaliações específicas da obra
-  const curatedReviews = (typeof getCuratedReviewsForMedia === 'function')
-    ? getCuratedReviewsForMedia(item)
-    : [];
-
-  const allReviews = [...userSavedReviews, ...curatedReviews];
-
-  container.innerHTML = '';
-  if (allReviews.length === 0) {
-    container.innerHTML = `<span style="font-size: 0.85rem; color: var(--text-muted);">Nenhuma avaliação registrada ainda. Seja o primeiro!</span>`;
-    return;
-  }
-
-  allReviews.forEach(rev => {
-    const card = document.createElement('div');
-    card.className = 'review-card';
-    card.style.background = 'rgba(15, 23, 42, 0.6)';
-    card.style.border = '1px solid rgba(255, 255, 255, 0.08)';
-    card.style.borderRadius = '10px';
-    card.style.padding = '0.9rem 1rem';
-    card.style.marginBottom = '0.75rem';
-
-    const starsNum = rev.rating <= 5 ? rev.rating : Math.min(5, Math.max(1, Math.round(rev.rating / 2)));
-    const starsText = '★'.repeat(starsNum) + '☆'.repeat(5 - starsNum);
-    const authorName = rev.user || rev.userName || rev.user_name || 'Usuário CineBook';
-
-    // Iniciais estilizadas limpas
-    const initials = rev.avatar && rev.avatar.length <= 3 && !/^\p{Emoji}/u.test(rev.avatar)
-      ? rev.avatar
-      : (authorName ? authorName.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'U');
-
-    card.innerHTML = `
-      <div class="review-card-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
-        <div style="display: flex; align-items: center; gap: 0.55rem;">
-          <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, rgba(3, 180, 228, 0.25) 0%, rgba(30, 213, 169, 0.3) 100%); border: 1px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; color: #38bdf8;">
-            ${initials}
-          </div>
-          <span style="font-weight: 700; color: #fff; font-size: 0.88rem;">${authorName}</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem;">
-          <span style="color: #f59e0b; font-weight: bold;">${starsText} (${starsNum}/5)</span>
-          <span style="color: var(--text-muted);">•</span>
-          <span style="color: var(--text-muted);">${rev.date || rev.created_at || 'Hoje'}</span>
-        </div>
-      </div>
-      <div class="review-card-body" style="font-size: 0.88rem; color: #cbd5e1; line-height: 1.5;">${rev.comment}</div>
-    `;
-    container.appendChild(card);
-  });
+  if (!container || typeof CineReviews === 'undefined') return;
+  const item = AppState.currentModalMedia || (typeof MEDIA_DATABASE !== 'undefined' ? MEDIA_DATABASE.find(m => m.id === mediaId) : null) || { id: mediaId };
+  // Só avaliações reais (CineBook + usuários do TMDB).
+  CineReviews.render(container, item, { compact: true });
 }
 
 async function saveCurrentReview() {
@@ -2189,17 +2135,12 @@ async function saveCurrentReview() {
     }
   }
 
-  if (!AppState.reviews[mediaId]) {
-    AppState.reviews[mediaId] = [];
-  }
-  AppState.reviews[mediaId].unshift({
-    userName: userName,
-    userAvatar: userAvatar,
+  CineReviews.addUserReview(mediaId, {
+    user: userName,
+    avatar: userAvatar,
     rating: AppState.selectedReviewStars,
-    comment: comment,
-    date: dateStr
+    comment
   });
-  localStorage.setItem('cinebook_reviews', JSON.stringify(AppState.reviews));
 
   showToast('Avaliação registrada com sucesso! ⭐');
   resetReviewForm();
@@ -2223,7 +2164,12 @@ async function openStatsModal() {
   if (!statsData) {
     const totalMedia = AppState.mediaList.length;
     const avgRating = (AppState.mediaList.reduce((acc, m) => acc + m.rating, 0) / (totalMedia || 1)).toFixed(1);
-    const totalReviews = Object.values(AppState.reviews).reduce((acc, list) => acc + list.length, 0);
+    // Conta as avaliações reais feitas neste navegador (os dois formatos).
+    const reviewedIds = new Set(Object.keys(AppState.reviews || {}));
+    Object.keys(localStorage).forEach(k => { if (k.startsWith('cinebook_reviews_')) reviewedIds.add(k.slice('cinebook_reviews_'.length)); });
+    const totalReviews = typeof CineReviews !== 'undefined'
+      ? [...reviewedIds].reduce((acc, id) => acc + CineReviews.getUserReviews(id).length, 0)
+      : 0;
 
     const genreMap = {};
     AppState.mediaList.forEach(m => {

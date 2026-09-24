@@ -1017,37 +1017,30 @@ async function saveReview() {
   const userName = DetailsState.currentUser ? DetailsState.currentUser.name : 'Usuário Anônimo';
   const userAvatar = DetailsState.currentUser ? (DetailsState.currentUser.avatar || '🍿') : '🍿';
 
-  const reviewObj = {
-    mediaId: item.id,
+  // Salva só o que a pessoa escreveu (sem texto padrão inventado).
+  CineReviews.addUserReview(item.id, {
     user: userName,
     avatar: userAvatar,
     rating: DetailsState.selectedStars,
-    comment: comment || 'Excelente obra recomendada pelo catálogo.',
-    date: new Date().toLocaleDateString('pt-BR')
-  };
+    comment
+  });
 
-  // Salva no localStorage
-  const key = `cinebook_reviews_${item.id}`;
-  const existing = JSON.parse(localStorage.getItem(key)) || [];
-  existing.unshift(reviewObj);
-  localStorage.setItem(key, JSON.stringify(existing));
-
-  // Tenta sincronizar com o backend em segundo plano
-  try {
-    const apiBase = window.location.origin.includes('localhost:8000') || window.location.origin.includes('127.0.0.1:8000') 
-      ? window.location.origin 
-      : 'http://localhost:8000';
-    await fetch(`${apiBase}/api/reviews`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        media_id: item.id,
-        user_name: userName,
-        rating: DetailsState.selectedStars * 2,
-        comment: reviewObj.comment
-      })
-    });
-  } catch (e) {}
+  // Backend Python: só quando é ele que está servindo o site.
+  const apiBase = window.location.origin;
+  if (/localhost:8000|127\.0\.0\.1:8000/.test(apiBase)) {
+    try {
+      await fetch(`${apiBase}/api/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_id: item.id,
+          user_name: userName,
+          rating: DetailsState.selectedStars * 2,
+          comment
+        })
+      });
+    } catch (e) {}
+  }
 
   // Reseta o formulário
   if (commentInput) commentInput.value = '';
@@ -1065,7 +1058,7 @@ async function saveReview() {
 }
 
 /**
- * Renderiza as avaliações específicas da obra (customizadas e exclusivas por filme/livro)
+ * Renderiza as avaliações da obra (reais: CineBook + TMDB)
  */
 function renderReviews(mediaId) {
   const container = document.getElementById('detailsReviewsList');
@@ -1081,62 +1074,9 @@ function renderReviews(mediaId) {
     container.innerHTML = '';
     return;
   }
-  const key = `cinebook_reviews_${mediaId}`;
-  const userSavedReviews = JSON.parse(localStorage.getItem(key)) || [];
-
-  // Pega as avaliações específicas e autênticas da obra
-  const curatedReviews = (typeof getCuratedReviewsForMedia === 'function') 
-    ? getCuratedReviewsForMedia(item) 
-    : [];
-
-  // Combina as resenhas do usuário logado no topo com as resenhas exclusivas da obra
-  const allReviews = [...userSavedReviews, ...curatedReviews];
-
-  container.innerHTML = '';
-  if (allReviews.length === 0) {
-    container.innerHTML = `<div style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">Nenhuma avaliação registrada ainda. Seja o primeiro a avaliar!</div>`;
-    return;
-  }
-
-  allReviews.forEach(rev => {
-    const card = document.createElement('div');
-    card.className = 'review-card';
-    card.style.background = 'rgba(15, 23, 42, 0.65)';
-    card.style.border = '1px solid rgba(255, 255, 255, 0.08)';
-    card.style.borderRadius = '14px';
-    card.style.padding = '1.3rem';
-    card.style.marginBottom = '1rem';
-    card.style.backdropFilter = 'blur(12px)';
-    card.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.2)';
-
-    const starsNum = rev.rating <= 5 ? rev.rating : Math.min(5, Math.max(1, Math.round(rev.rating / 2)));
-    const starsHtml = '★'.repeat(starsNum) + '☆'.repeat(5 - starsNum);
-    
-    // Iniciais estilizadas e modernas (sem emojis)
-    const initials = rev.avatar && rev.avatar.length <= 3 && !/^\p{Emoji}/u.test(rev.avatar)
-      ? rev.avatar 
-      : (rev.user ? rev.user.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'U');
-
-    card.innerHTML = `
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-          <div style="width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, rgba(3, 180, 228, 0.25) 0%, rgba(30, 213, 169, 0.3) 100%); border: 1px solid rgba(56, 189, 248, 0.4); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);">
-            ${initials}
-          </div>
-          <div>
-            <strong style="color: #ffffff; font-size: 0.95rem; display: block; font-weight: 700;">${rev.user}</strong>
-            <small style="color: var(--text-muted); font-size: 0.78rem;">${rev.date}</small>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.45rem;">
-          <span style="color: #f59e0b; font-weight: bold; font-size: 1.05rem; letter-spacing: 2px;">${starsHtml}</span>
-          <span style="color: #cbd5e1; font-size: 0.82rem; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.15rem 0.45rem; border-radius: 6px;">(${starsNum}/5)</span>
-        </div>
-      </div>
-      <p style="color: #cbd5e1; font-size: 0.95rem; line-height: 1.65; margin: 0; font-weight: 400;">${rev.comment}</p>
-    `;
-    container.appendChild(card);
-  });
+  // Só avaliações reais: as dos usuários do CineBook e as dos usuários do
+  // TMDB (ver js/reviews.js). Nada de críticas geradas automaticamente.
+  CineReviews.render(container, item);
 }
 
 /**
