@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Detalhes completos da obra, sinopse, elenco, trailer oficial, onde assistir e avaliações - CineBook Hub.">
+  <title id="pageTitle">Detalhes da Obra • CineBook</title>
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Favicon Oficial -->
+  <link rel="icon" type="image/png" href="assets/logo.png">
+
+  <!-- Estilos Customizados -->
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/i18n.js" defer></script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060d17">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineBook">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body>
+
+  <div class="details-page-wrapper">
+
+    <!-- ================= HEADER ================= -->
+    <header class="cine-header">
+      <div class="cine-header-container">
+        <div class="cine-nav-left">
+          <a href="index.html" class="cine-logo" id="brandBtn" title="Ir para o Início">
+            <div class="cine-logo-icon">
+              <img src="assets/logo.png" alt="CINEBOOKS Logo" class="cine-logo-img">
+            </div>
+            <span class="cine-logo-text"><span class="logo-cine">CINE</span> <span class="logo-books">BOOKS</span></span>
+          </a>
+
+          <!-- Abas de Navegação Principal: Filmes, Séries, Livros e Pessoas -->
+          <nav class="cine-nav-links" aria-label="Navegação Principal">
+            <a href="index.html?tab=movie" class="cine-nav-item" data-tab="movie" id="tabMovies" data-i18n="nav_movies">
+              Filmes
+            </a>
+            <a href="index.html?tab=series" class="cine-nav-item" data-tab="series" id="tabSeries" data-i18n="nav_series">
+              Séries
+            </a>
+            <a href="index.html?tab=book" class="cine-nav-item" data-tab="book" id="tabBooks" data-i18n="nav_books">
+              Livros
+            </a>
+            <a href="index.html?tab=people" class="cine-nav-item" data-tab="people" id="tabPeople" data-i18n="nav_people">
+              Pessoas
+            </a>
+          </nav>
+        </div>
+
+        <!-- Ações do Usuário (Botão Catálogo + Seletor de Idioma + Entrar / Criar Conta ou Perfil) -->
+        <div class="user-nav-actions" id="userNavActions">
+          <!-- Botão Voltar ao Catálogo Compacto no Topo -->
+          <a href="index.html" class="btn-back-catalog-pill" id="btnBackCatalog" title="Voltar ao Catálogo">
+            <span>←</span> <span id="backCatalogText" data-i18n="btn_back_catalog">Voltar ao Catálogo</span>
+          </a>
+
+          <!-- Seletor de Idiomas Dropdown -->
+          <div class="lang-selector-container">
+            <div class="cine-lang-badge" id="langSelectorTrigger" title="Alterar Idioma">
+              <span id="currentLangFlag" class="lang-flag-box"><img src="https://flagcdn.com/w40/br.png" srcset="https://flagcdn.com/w80/br.png 2x" alt="Português" class="lang-flag-img"></span> <span id="currentLangText">PT</span> <span style="font-size: 0.65rem; opacity: 0.7;">▼</span>
+            </div>
+            <div class="lang-dropdown-menu" id="langDropdownMenu">
+              <!-- Preenchido via i18n.js -->
+            </div>
+          </div>
+
+          <!-- Links quando deslogado -->
+          <div id="authButtonsGroup" style="display: flex; align-items: center; gap: 0.85rem;">
+            <a href="login.html" class="cine-auth-link" style="color: #cbd5e1; text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 0.45rem 0.85rem; border-radius: 8px;" data-i18n="auth_login">
+              Entrar
+            </a>
+            <a href="cadastro.html" class="cine-auth-btn-pill" style="color: #ffffff; text-decoration: none; font-size: 0.88rem; font-weight: 600; padding: 0.45rem 1.1rem; border-radius: 20px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4); border: none; display: inline-flex; align-items: center; justify-content: center;" data-i18n="auth_register">
+              Criar conta
+            </a>
+          </div>
+
+          <!-- Container do Perfil quando logado -->
+          <div class="user-profile-container" id="userProfileContainer" style="display: none;">
+            <div class="user-profile-chip" id="userProfileChip" title="Meu Perfil">
+              <div class="user-avatar-circle" id="headerUserAvatar">🍿</div>
+              <span class="user-name-text" id="headerUserName">afyateste</span>
+              <span style="font-size: 0.65rem; opacity: 0.7;">▼</span>
+            </div>
+
+            <!-- Dropdown Menu do Perfil -->
+            <div class="user-dropdown-menu" id="userProfileDropdown">
+              <div class="dropdown-header-info">
+                <div class="dropdown-user-name" id="dropdownUserName">afyateste</div>
+                <div class="dropdown-user-email" id="dropdownUserEmail">afyateste@gmail.com</div>
+              </div>
+              <div class="dropdown-divider"></div>
+              <a href="perfil.html" class="dropdown-item" data-i18n="profile_my_library">
+                <span>⭐</span> <span data-i18n="profile_my_library">Minha Biblioteca</span>
+              </a>
+              <div class="dropdown-divider"></div>
+              <button class="dropdown-item danger" id="btnLogoutHeader" data-i18n="profile_logout">
+                <span>🚪</span> Sair da Conta
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ================= HERO DA OBRA ================= -->
+    <section class="details-hero" id="detailsHero">
+      <div class="details-hero-overlay"></div>
+      
+      <div class="details-hero-container">
+        <!-- Pôster em Alta Resolução -->
+        <div class="details-poster-frame">
+          <img 
+            src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80" 
+            alt="Capa da Obra" 
+            id="detailsPosterImg" 
+            class="details-poster-img"
+          />
+        </div>
+
+        <!-- Informações Principais da Obra -->
+        <div class="details-hero-info">
+          <div class="details-title-row">
+            <span class="details-type-tag movie" id="detailsTypeTag">FILME</span>
+            <h1 class="details-main-title" id="detailsMainTitle">Carregando Obra...</h1>
+            <div class="details-original-title" id="detailsOriginalTitle"></div>
+          </div>
+
+          <div class="details-tagline" id="detailsTagline"></div>
+
+          <!-- Metadados (Ano, Duração/Temporadas/Páginas, Gêneros) -->
+          <div class="details-meta-bar">
+            <span class="details-meta-pill" id="detailsYear">2024</span>
+            <span class="details-meta-pill" id="detailsDuration">120 min</span>
+            <span id="detailsGenres">Ficção Científica, Aventura</span>
+          </div>
+
+          <!-- Ações e Avaliação -->
+          <div class="details-actions-row">
+            <!-- Nota Circular -->
+            <div class="details-score-box">
+              <div class="score-badge" style="position: static; width: 42px; height: 42px;">
+                <svg viewBox="0 0 36 36">
+                  <circle class="score-bg" cx="18" cy="18" r="15.5"></circle>
+                  <circle class="score-progress" id="detailsScoreCircle" cx="18" cy="18" r="15.5" stroke="#1ed5a9" stroke-dasharray="85, 100"></circle>
+                </svg>
+                <div class="score-text" id="detailsScoreText" style="font-size: 0.8rem;">85<sup>%</sup></div>
+              </div>
+              <span class="details-score-label" data-i18n="lbl_user_score">Avaliação do Público</span>
+            </div>
+
+            <!-- Botões de Watchlist -->
+            <button class="details-btn-action" id="btnActionFavorite" data-status="favorite">
+              <span>⭐</span> <span id="lblActionFavorite" data-i18n="watchlist_btn_favorite">Favorito</span>
+            </button>
+            <button class="details-btn-action" id="btnActionWatching" data-status="watching">
+              <span>🍿</span> <span id="lblActionWatching" data-i18n="watchlist_btn_watching">Assistindo / Lendo</span>
+            </button>
+            <button class="details-btn-action" id="btnActionPlan" data-status="plan">
+              <span>➕</span> <span id="lblActionPlan" data-i18n="watchlist_btn_plan">Quero Ver / Ler</span>
+            </button>
+            <button class="details-btn-action" id="btnActionWatched" data-status="completed">
+              <span>✅</span> <span id="lblActionWatched" data-i18n="watchlist_btn_watched">Já Vi / Já Li</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CORPO PRINCIPAL ================= -->
+    <main class="details-content-wrapper">
+      
+      <!-- Coluna Principal (Sinopse, Trailer, Elenco, Avaliações, Recomendações) -->
+      <div class="details-main-column">
+
+        <!-- Sinopse -->
+        <article class="details-card-block">
+          <h2 class="details-block-title" id="titleSynopsis">
+            <span>📖</span> <span data-i18n="details_synopsis_title">Sinopse Oficial</span>
+          </h2>
+          <p class="details-synopsis-text" id="detailsSynopsisText">
+            Carregando sinopse oficial da obra...
+          </p>
+        </article>
+
+        <!-- Trailer Oficial / Trecho do Livro -->
+        <article class="details-card-block" id="detailsMediaPreviewBlock">
+          <h2 class="details-block-title" id="titleTrailer">
+            <span>🎬</span> <span data-i18n="details_trailer_title">Trailer Oficial</span>
+          </h2>
+          <div id="detailsTrailerContainer">
+            <!-- Iframe de Vídeo ou Bloco de Leitura injetado via JS -->
+          </div>
+        </article>
+
+        <!-- Elenco Principal / Autores -->
+        <article class="details-card-block" id="detailsCastBlock">
+          <h2 class="details-block-title" id="titleCast">
+            <span>👥</span> <span data-i18n="details_cast_title">Elenco Principal & Produção</span>
+          </h2>
+          <div class="cast-grid" id="detailsCastGrid">
+            <!-- Cards de Atores/Autores injetados dinamicamente -->
+          </div>
+        </article>
+
+        <!-- Avaliações e Críticas dos Usuários -->
+        <article class="details-card-block">
+          <h2 class="details-block-title" id="titleReviews">
+            <span>⭐</span> <span data-i18n="details_reviews_title">Avaliações & Críticas da Comunidade</span>
+          </h2>
+
+          <!-- Formulário de Avaliação (5 Estrelas) -->
+          <div class="review-box-container">
+            <div class="review-box-header">
+              <h3 class="review-box-title" id="lblWriteReview" data-i18n="review_leave_title">Deixe sua Avaliação</h3>
+              <div class="rating-stars-wrapper">
+                <span class="rating-stars-label" id="lblYourRating" data-i18n="review_your_rating">Sua Nota:</span>
+                <div class="star-rating-5" id="detailsStarRating">
+                  <span class="star-btn" data-star="1" role="button" tabindex="0" title="1 estrela">★</span>
+                  <span class="star-btn" data-star="2" role="button" tabindex="0" title="2 estrelas">★</span>
+                  <span class="star-btn" data-star="3" role="button" tabindex="0" title="3 estrelas">★</span>
+                  <span class="star-btn" data-star="4" role="button" tabindex="0" title="4 estrelas">★</span>
+                  <span class="star-btn" data-star="5" role="button" tabindex="0" title="5 estrelas">★</span>
+                </div>
+                <span class="star-feedback-text" id="detailsStarCount">0/5</span>
+                <span class="star-feedback-label" id="ratingTextLabel" data-i18n="review_select_stars">Selecione as estrelas</span>
+              </div>
+            </div>
+
+            <textarea 
+              id="detailsReviewComment" 
+              class="review-custom-textarea" 
+              placeholder="Compartilhe o que você achou desta obra..." 
+              data-i18n-placeholder="review_placeholder"
+              rows="3"
+            ></textarea>
+
+            <div class="review-box-footer">
+              <button class="btn-publish-review" id="btnPublishReview" data-i18n="review_btn_publish">
+                Publicar Avaliação
+              </button>
+            </div>
+          </div>
+
+          <!-- Lista de Avaliações -->
+          <div class="reviews-list" id="detailsReviewsList">
+            <!-- Reviews injetados dinamicamente -->
+          </div>
+        </article>
+
+        <!-- Obras Semelhantes e Recomendações -->
+        <article class="details-card-block" id="detailsRecsBlock">
+          <h2 class="details-block-title" id="titleRecommendations" data-i18n="details_recommendations_title">
+            Obras Semelhantes Recomendadas
+          </h2>
+          <div class="media-grid" id="detailsRecsGrid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.25rem;">
+            <!-- Itens recomendados injetados dinamicamente -->
+          </div>
+        </article>
+
+      </div>
+
+      <!-- Barra Lateral (Onde Assistir & Informações Técnicas) -->
+      <aside class="details-sidebar-column">
+
+        <!-- Onde Assistir / Streaming -->
+        <div class="details-card-block">
+          <h3 class="details-block-title" style="font-size: 1.15rem;" id="titleProviders">
+            <span>📺</span> <span data-i18n="details_where_to_watch_title">Onde Assistir / Ler</span>
+          </h3>
+          <div id="detailsProvidersList" style="display: flex; flex-direction: column; gap: 0.6rem;">
+            <!-- Chips de Streaming injetados via JS -->
+          </div>
+        </div>
+
+        <!-- Ficha Técnica -->
+        <div class="details-card-block">
+          <h3 class="details-block-title" style="font-size: 1.15rem;" id="titleTechInfo">
+            <span>ℹ️</span> <span data-i18n="tech_info_title">Ficha Técnica</span>
+          </h3>
+          
+          <div class="details-info-table">
+            <div class="details-info-item">
+              <span class="details-info-label" id="lblTechTitle" data-i18n="tech_original_title">Título Original</span>
+              <span class="details-info-value" id="techOriginalTitle">-</span>
+            </div>
+
+            <div class="details-info-item">
+              <span class="details-info-label" id="lblTechDirector" data-i18n="tech_director_author">Direção / Autor</span>
+              <span class="details-info-value" id="techDirector">-</span>
+            </div>
+
+            <div class="details-info-item">
+              <span class="details-info-label" id="lblTechRelease" data-i18n="tech_release_year">Ano de Lançamento</span>
+              <span class="details-info-value" id="techReleaseYear">-</span>
+            </div>
+
+            <div class="details-info-item">
+              <span class="details-info-label" id="lblTechStatus" data-i18n="tech_status">Status</span>
+              <span class="details-info-value" id="techStatus">Lançado / Disponível</span>
+            </div>
+
+            <div class="details-info-item">
+              <span class="details-info-label" id="lblTechDuration" data-i18n="tech_duration_format">Duração / Formato</span>
+              <span class="details-info-value" id="techDurationFormat">-</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </main>
+
+    <!-- ================= MODAL DE DETALHES DA PESSOA / ARTISTA (TMDB) ================= -->
+    <div class="modal-backdrop" id="personModal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="modal-dialog" style="max-width: 820px;">
+        <button class="modal-close-btn" id="personModalCloseBtn" aria-label="Fechar Modal">✕</button>
+
+        <!-- Topo com foto de perfil e dados biográficos -->
+        <div class="modal-hero person-modal-hero" id="personModalHero">
+          <div class="modal-hero-overlay"></div>
+          <div class="modal-hero-content">
+            <img src="" alt="Foto" class="modal-poster person-modal-photo" id="personModalPhoto">
+            <div class="modal-hero-info">
+              <h2 class="modal-title" id="personModalName">Nome do Artista</h2>
+              <div class="modal-tagline" id="personModalDepartment">Atuação • Cinema & TV</div>
+              <div class="modal-meta-row" id="personModalMetaRow">
+                <span id="personModalBirth">🎂 Nasc.: —</span>
+                <span>•</span>
+                <span id="personModalPlace">📍 —</span>
+                <span>•</span>
+                <span id="personModalPopularity">🔥 Popularidade</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Corpo do Modal -->
+        <div class="modal-body">
+          <!-- Biografia -->
+          <div class="modal-section">
+            <h3 class="modal-section-title">👤 <span data-i18n="person_bio_title">Biografia</span></h3>
+            <p class="modal-synopsis" id="personModalBio" style="white-space: pre-line; line-height: 1.6;">Carregando biografia...</p>
+          </div>
+
+          <!-- Conhecido(a) por / Filmografia Principal -->
+          <div class="modal-section">
+            <h3 class="modal-section-title">🎬 <span data-i18n="person_credits_title">Conhecido(a) por (Filmografia & Obras)</span></h3>
+            <div class="person-credits-grid" id="personModalCreditsGrid">
+              <!-- Injetado dinamicamente com posters de filmes e séries da pessoa -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TOAST CONTAINER ================= -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+    <!-- ================= FOOTER ================= -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-brand" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <img src="assets/logo.png" alt="Logo" style="width: 22px; height: 22px; border-radius: 6px; object-fit: cover;"> CineBook Hub • Python Full Stack
+        </div>
+        <p class="footer-desc">
+          Projeto acadêmico de Ciência da Computação. Integrando Frontend (HTML5, CSS3, JS) com Backend REST em Python & SQLite.
+        </p>
+        <div class="footer-credits">
+          &copy; 2026 CineBook • Todos os 11 idiomas suportados
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/tmdb.js"></script>
+  <script src="js/details.js"></script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+# Dependências opcionais para o CineBook
+# O servidor padrão 'server.py' roda com a biblioteca padrão do Python (Sem necessidade de instalar nada via pip).
+# Caso deseje rodar a versão com o framework Flask ('app_flask.py'):
+
+flask>=3.0.0

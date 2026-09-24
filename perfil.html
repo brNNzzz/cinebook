@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CineBook - Perfil do Usuário & Painel</title>
+  <meta name="description" content="Painel completo de perfil, estatísticas e estante personalizada no CineBook.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/data.js"></script>
+  <script src="js/tmdb.js"></script>
+  <script src="js/i18n.js" defer></script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060d17">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineBook">
+  <script src="js/pwa.js" defer></script>
+  
+  <style>
+    /* ==========================================================================
+       FUSÃO DOS DOIS ESTILOS (TMDB BANNER + LETTERBOXD ESTANTE ESCURA)
+       ========================================================================== */
+    body {
+      background-color: #0b0f1d;
+      color: #ffffff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    .cine-header {
+      height: 60px;
+      background: rgba(6, 13, 23, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .cine-logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-transform: uppercase;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .cine-logo:hover {
+      transform: scale(1.03);
+      filter: drop-shadow(0 0 14px rgba(192, 132, 252, 0.6));
+    }
+
+    .cine-logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #0d1222;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .cine-logo-icon img, .cine-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 9px;
+      display: block;
+    }
+
+    .cine-logo-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .logo-cine {
+      background: linear-gradient(135deg, #ffffff 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-books {
+      background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cine-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .cine-nav-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .cine-nav-link:hover, .cine-nav-link.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* ==========================================================================
+       1. HERO BANNER CINEMÁTICO (ESTILO TMDB COM ÂNGULOS & GRADIENTE)
+       ========================================================================== */
+    .tmdb-profile-hero {
+      position: relative;
+      background: linear-gradient(135deg, #061e38 0%, #0d253f 40%, #01b4e4 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2.5rem 3rem 2rem 3rem;
+      overflow: hidden;
+    }
+
+    /* Formas geométricas diagonais no fundo idênticas ao TMDb */
+    .tmdb-profile-hero::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: 15%;
+      width: 400px;
+      height: 350px;
+      background: linear-gradient(45deg, rgba(1, 180, 228, 0.25) 0%, rgba(144, 206, 161, 0.15) 100%);
+      transform: rotate(25deg);
+      border-radius: 40px;
+      pointer-events: none;
+    }
+
+    .tmdb-profile-hero::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      right: 5%;
+      width: 500px;
+      height: 250px;
+      background: linear-gradient(135deg, rgba(13, 37, 63, 0.4) 0%, rgba(1, 180, 228, 0.2) 100%);
+      transform: rotate(-15deg);
+      border-radius: 50px;
+      pointer-events: none;
+    }
+
+    .hero-container-inner {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero-user-block {
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+    }
+
+    /* AVATAR CIRCULAR TMDB */
+    .tmdb-avatar-circle {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+      border: 3px solid rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .tmdb-avatar-circle img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .tmdb-avatar-circle:hover {
+      transform: scale(1.05);
+      border-color: #38bdf8;
+    }
+
+    .avatar-hover-cam {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .tmdb-avatar-circle:hover .avatar-hover-cam {
+      opacity: 1;
+    }
+
+    .hero-user-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .hero-username-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-username {
+      font-size: 1.95rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-member-date {
+      font-size: 0.88rem;
+      color: rgba(255, 255, 255, 0.75);
+      font-weight: 400;
+    }
+
+    /* ANÉIS CIRCULARES DE NOTA MÉDIA (ESTILO TMDB SCORE DONUT) */
+    .tmdb-score-group {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .score-donut-card {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .donut-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #081c22;
+      border: 3px solid #21d07a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .donut-circle.series {
+      border-color: #d2d531;
+    }
+
+    .donut-lbl {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 600;
+      line-height: 1.2;
+      max-width: 95px;
+    }
+
+    /* CONTADORES DA ESTANTE (ESTILO LETTERBOXD NA DIREITA DO HERO) */
+    .hero-shelf-counters {
+      display: flex;
+      align-items: center;
+      gap: 2.25rem;
+      background: rgba(6, 13, 23, 0.55);
+      backdrop-filter: blur(12px);
+      padding: 0.85rem 1.5rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .shelf-stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .shelf-stat-num {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1;
+    }
+
+    .shelf-stat-lbl {
+      font-size: 0.76rem;
+      color: #94a3b8;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+
+    /* ==========================================================================
+       2. SUB-BARRA DE NAVEGAÇÃO DE SEÇÕES (TMDB TABS)
+       ========================================================================== */
+    .tmdb-subnav {
+      background: #ffffff;
+      color: #0d253f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .subnav-container {
+      max-width: 1300px;
+      width: 100%;
+      padding: 0 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .subnav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .subnav-tab-btn {
+      padding: 0.85rem 1.25rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #0f172a;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .subnav-tab-btn:hover {
+      color: #01b4e4;
+    }
+
+    .subnav-tab-btn.active {
+      color: #01b4e4;
+      border-bottom-color: #01b4e4;
+    }
+
+    .btn-edit-profile-trigger {
+      background: linear-gradient(135deg, #01b4e4 0%, #0284c7 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 2px 8px rgba(1, 180, 228, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-edit-profile-trigger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(1, 180, 228, 0.6);
+    }
+
+    /* ==========================================================================
+       3. CONTEÚDO PRINCIPAL DO DASHBOARD
+       ========================================================================== */
+    .profile-dashboard-layout {
+      max-width: 1300px;
+      width: 100%;
+      margin: 2rem auto 4rem auto;
+      padding: 0 3rem;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* PAINEL 1: VISÃO GERAL & ANALYTICS TMDB */
+    .tmdb-analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    .analytics-card {
+      background: rgba(18, 24, 43, 0.7);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .analytics-card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 0.65rem;
+    }
+
+    .analytics-numbers-row {
+      display: flex;
+      align-items: baseline;
+      gap: 2rem;
+    }
+
+    .analytics-stat-unit h4 {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      font-weight: 600;
+      margin: 0 0 0.25rem 0;
+      text-transform: uppercase;
+    }
+
+    .analytics-stat-unit span {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #38bdf8;
+    }
+
+    /* BARRA DE DISTRIBUIÇÃO DE NOTAS 1 A 10 */
+    .rating-histogram-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 70px;
+      padding-top: 0.5rem;
+    }
+
+    .rating-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .rating-bar-fill {
+      width: 100%;
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      border-radius: 3px 3px 0 0;
+      min-height: 4px;
+      transition: height 0.3s ease;
+    }
+
+    .rating-bar-num {
+      font-size: 0.65rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    /* LISTA DE GÊNEROS MAIS ASSISTIDOS */
+    .genre-progress-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .genre-progress-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .genre-item-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .genre-bar-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .genre-bar-val {
+      height: 100%;
+      background: linear-gradient(90deg, #c084fc 0%, #38bdf8 100%);
+      border-radius: 4px;
+    }
+
+    /* PAINEL 2: ESTANTE & LISTAS COM ABAS EM PÍLULA (ESTILO SCREENSHOT 2) */
+    .shelf-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .shelf-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    /* ABAS EM PÍLULA */
+    .shelf-pill-filters {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+    }
+
+    .shelf-pill-btn {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 0.4rem 1rem;
+      color: #94a3b8;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      user-select: none;
+    }
+
+    .shelf-pill-btn:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .shelf-pill-btn.active {
+      color: #ffffff;
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+    }
+
+    /* GRADE DE CARDS DA ESTANTE */
+    .watchlist-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.75rem 1.4rem;
+    }
+
+    .watchlist-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .watchlist-poster-wrap {
+      width: 100%;
+      aspect-ratio: 2/3;
+      border-radius: 10px;
+      overflow: hidden;
+      background-color: #12182b;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+
+    .watchlist-poster-wrap:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 12px 28px rgba(1, 180, 228, 0.35);
+      border-color: rgba(1, 180, 228, 0.6);
+    }
+
+    .watchlist-poster-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .watchlist-type-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: rgba(11, 15, 29, 0.88);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+    }
+
+    .watchlist-status-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .watchlist-info-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .watchlist-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .watchlist-year {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .btn-remove-watchlist {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      padding: 0.35rem 0.6rem;
+      color: #fca5a5;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-remove-watchlist:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: scale(1.05);
+    }
+
+    .empty-watchlist-box {
+      grid-column: 1 / -1;
+      padding: 3.5rem 2rem;
+      text-align: center;
+      background: rgba(18, 24, 43, 0.4);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.85rem;
+    }
+
+    /* MODAL DE EDIÇÃO DE PERFIL & AVATAR */
+    .profile-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 10, 20, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 1.5rem;
+    }
+
+    .profile-modal-backdrop.open {
+      display: flex;
+      animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .profile-modal-card {
+      background: #111728;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 18px;
+      max-width: 520px;
+      width: 100%;
+      padding: 2rem;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 30px rgba(1, 180, 228, 0.25);
+      position: relative;
+    }
+
+    .modal-close-x {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: #94a3b8;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 1rem;
+    }
+
+    .modal-close-x:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    .avatar-preset-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 0.5rem;
+      margin: 0.75rem 0 1rem 0;
+    }
+
+    .avatar-preset-item {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1.5px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .avatar-preset-item:hover {
+      transform: scale(1.15);
+      border-color: #38bdf8;
+      background: rgba(1, 180, 228, 0.25);
+    }
+
+    .avatar-preset-item.active {
+      border-color: #0284c7;
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.5) 0%, rgba(14, 165, 233, 0.3) 100%);
+      box-shadow: 0 0 14px rgba(2, 132, 199, 0.6);
+      transform: scale(1.1);
+    }
+
+    .btn-upload-file {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.55rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(56, 189, 248, 0.4);
+      border-radius: 8px;
+      color: #7dd3fc;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn-upload-file:hover {
+      background: rgba(1, 180, 228, 0.15);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    .profile-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .profile-form-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .profile-form-input {
+      background-color: #0b0f1d;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      color: #ffffff;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .profile-form-input:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 12px rgba(2, 132, 199, 0.35);
+    }
+
+    .profile-feedback-box {
+      padding: 0.65rem 0.85rem;
+      border-radius: 7px;
+      font-size: 0.84rem;
+      margin-bottom: 0.85rem;
+      display: none;
+    }
+
+    .profile-feedback-box.success {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #86efac;
+    }
+
+    .profile-feedback-box.error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    @media (max-width: 900px) {
+      .cine-header {
+        padding: 0.6rem 1rem;
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .hero-container-inner {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+      }
+      .hero-user-block {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .hero-username-row {
+        justify-content: center;
+        text-align: center;
+      }
+      .profile-fav-genres-row {
+        justify-content: center;
+      }
+      .tmdb-analytics-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-shelf-counters {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.65rem;
+      }
+      .shelf-stat-item {
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= HEADER UNIFICADO ================= -->
+  <header class="cine-header">
+    <div style="display: flex; align-items: center; gap: 2.2rem;">
+      <a href="index.html" class="cine-logo" title="Ir para a Página Inicial">
+        <div class="cine-logo-icon">
+          <img src="assets/logo.png" alt="CINEBOOKS Logo" class="cine-logo-img">
+        </div>
+        <span class="cine-logo-text"><span class="logo-cine">CINE</span> <span class="logo-books">BOOKS</span></span>
+      </a>
+      <nav class="cine-nav-links">
+        <a href="index.html?tab=movie" class="cine-nav-link" data-i18n="nav_movies">Filmes</a>
+        <a href="index.html?tab=series" class="cine-nav-link" data-i18n="nav_series">Séries</a>
+        <a href="index.html?tab=book" class="cine-nav-link" data-i18n="nav_books">Livros</a>
+        <a href="index.html?tab=people" class="cine-nav-link" data-i18n="nav_people">Pessoas</a>
+      </nav>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      <!-- Seletor de Idiomas Dropdown -->
+      <div class="lang-selector-container">
+        <div class="cine-lang-badge" id="langSelectorTrigger" title="Alterar Idioma">
+          <span id="currentLangFlag" class="lang-flag-box"><img src="https://flagcdn.com/w40/br.png" srcset="https://flagcdn.com/w80/br.png 2x" alt="Português" class="lang-flag-img"></span> <span id="currentLangText">PT</span> <span style="font-size: 0.65rem; opacity: 0.7;">▼</span>
+        </div>
+        <div class="lang-dropdown-menu" id="langDropdownMenu"></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= 1. HERO BANNER TMDB + STATS COUNTERS ================= -->
+  <section class="tmdb-profile-hero">
+    <div class="hero-container-inner">
+      
+      <!-- Usuário, Avatar & Nota Média TMDb -->
+      <div class="hero-user-block">
+        <div class="tmdb-avatar-circle" id="profileAvatarBtn" title="Clique para alterar foto de perfil">
+          <span id="mainAvatarDisplay">AF</span>
+          <div class="avatar-hover-cam">📷</div>
+        </div>
+
+        <div class="hero-user-details">
+          <div class="hero-username-row">
+            <h1 class="hero-username" id="profileDisplayName">afyateste</h1>
+            <span class="hero-member-date" id="profileMemberSince">Membro desde Agosto de 2026</span>
+          </div>
+
+          <!-- TMDb Circular Score Donut Badges -->
+          <div class="tmdb-score-group">
+            <div class="score-donut-card">
+              <div class="donut-circle">92<sup>%</sup></div>
+              <div class="donut-lbl" data-i18n="profile_avg_movie_score">Avaliação Média de Filmes</div>
+            </div>
+            <div class="score-donut-card">
+              <div class="donut-circle series">88<sup>%</sup></div>
+              <div class="donut-lbl" data-i18n="profile_avg_series_score">Avaliação Média de Séries</div>
+            </div>
+          </div>
+
+          <!-- Categorias Favoritas (Recomendações Personalizadas) -->
+          <div class="profile-fav-genres-row" id="profileFavGenresRow" style="display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.85rem;">
+            <span style="font-size: 0.78rem; font-weight: 800; color: #c084fc; background: rgba(139, 92, 246, 0.18); border: 1px solid rgba(192, 132, 252, 0.35); padding: 0.25rem 0.65rem; border-radius: 9999px;" data-i18n="profile_rec_preferences">Preferências de Recomendações:</span>
+            <div id="profileGenreChipsList" style="display: inline-flex; flex-wrap: wrap; gap: 0.35rem;">
+              <!-- Injetado via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contadores da Estante (Estilo Screenshot 2) -->
+      <div class="hero-shelf-counters">
+        <div class="shelf-stat-item">
+          <div class="shelf-stat-num" id="topStatPlanCount">0</div>
+          <div class="shelf-stat-lbl" data-i18n="profile_stat_plan">Quero ver</div>
+        </div>
+        <div class="shelf-stat-item">
+          <div class="shelf-stat-num" id="topStatWatchedCount">0</div>
+          <div class="shelf-stat-lbl" data-i18n="profile_stat_watched">Assistidos</div>
+        </div>
+        <div class="shelf-stat-item">
+          <div class="shelf-stat-num" id="topStatReadCount">0</div>
+          <div class="shelf-stat-lbl" data-i18n="profile_stat_read">Lidos</div>
+        </div>
+        <div class="shelf-stat-item">
+          <div class="shelf-stat-num" id="topStatFavCount">0</div>
+          <div class="shelf-stat-lbl" data-i18n="profile_stat_favorites">Favoritos</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= 2. SUB-BARRA DE ABAS TMDB ================= -->
+  <nav class="tmdb-subnav" aria-label="Navegação do Perfil">
+    <div class="subnav-container">
+      <div class="subnav-tabs">
+        <button class="subnav-tab-btn active" id="subnavTabShelf">
+          <span>📚</span> <span data-i18n="profile_tab_shelf">Minha Estante & Listas</span>
+        </button>
+        <button class="subnav-tab-btn" id="subnavTabStats">
+          <span>📊</span> <span data-i18n="profile_tab_stats">Visão Geral & Estatísticas</span>
+        </button>
+        <button class="subnav-tab-btn" id="subnavTabReviews">
+          <span>💬</span> <span data-i18n="profile_tab_reviews">Críticas & Resenhas</span>
+        </button>
+      </div>
+
+      <button class="btn-edit-profile-trigger" id="openEditModalBtn">
+        <span>⚙️</span> <span data-i18n="profile_btn_edit">Editar Perfil & Foto</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ================= 3. CONTEÚDO PRINCIPAL DO DASHBOARD ================= -->
+  <main class="profile-dashboard-layout">
+
+    <!-- SEÇÃO 1: PAINEL DE ESTATÍSTICAS TMDB (VISÃO GERAL) -->
+    <section id="sectionAnalytics" class="tmdb-analytics-grid">
+      
+      <!-- Card: Estatísticas Numéricas -->
+      <div class="analytics-card">
+        <h3 class="analytics-card-title">
+          <span>📈</span> <span data-i18n="profile_stats_title">Estatísticas</span>
+          <span style="font-size: 0.75rem; color: #01b4e4; font-weight: 600;" data-i18n="profile_stats_general">Geral</span>
+        </h3>
+        <div class="analytics-numbers-row">
+          <div class="analytics-stat-unit">
+            <h4 data-i18n="profile_stats_total">Total Catalogado</h4>
+            <span id="statTotalItems">0</span>
+          </div>
+          <div class="analytics-stat-unit">
+            <h4 data-i18n="profile_stats_reviews">Resenhas Feitas</h4>
+            <span id="statTotalReviews">1</span>
+          </div>
+        </div>
+        <p style="font-size: 0.8rem; color: #94a3b8; margin: 0; line-height: 1.4;" id="profileStatsAvgMsg" data-i18n="profile_stats_avg_msg">
+          Você mantém uma média de avaliação positiva de <strong>5.0 estrelas</strong> no catálogo!
+        </p>
+      </div>
+
+      <!-- Card: Histograma de Avaliações 1 a 10 (TMDb Score Board) -->
+      <div class="analytics-card">
+        <h3 class="analytics-card-title">
+          <span>📊</span> <span data-i18n="profile_scoreboard_title">Quadro de Avaliações</span>
+          <span style="font-size: 0.75rem; color: #94a3b8;" data-i18n="profile_scoreboard_scale">Escala 1 - 10</span>
+        </h3>
+        <div class="rating-histogram-bar">
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 10%;"></div><span class="rating-bar-num">1</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 10%;"></div><span class="rating-bar-num">2</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 15%;"></div><span class="rating-bar-num">3</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 20%;"></div><span class="rating-bar-num">4</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 35%;"></div><span class="rating-bar-num">5</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 45%;"></div><span class="rating-bar-num">6</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 60%;"></div><span class="rating-bar-num">7</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 80%;"></div><span class="rating-bar-num">8</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 95%;"></div><span class="rating-bar-num">9</span></div>
+          <div class="rating-bar-col"><div class="rating-bar-fill" style="height: 100%;"></div><span class="rating-bar-num">10</span></div>
+        </div>
+      </div>
+
+      <!-- Card: Gêneros Mais Assistidos / Lidos -->
+      <div class="analytics-card">
+        <h3 class="analytics-card-title">
+          <span>🎭</span> <span data-i18n="profile_top_genres_title">Gêneros Mais Assistidos</span>
+        </h3>
+        <div class="genre-progress-list" id="analyticsGenresList">
+          <div class="genre-progress-item">
+            <div class="genre-item-info"><span class="analytics-genre-name" data-genre-key="scifi">Ficção Científica</span><span>85%</span></div>
+            <div class="genre-bar-track"><div class="genre-bar-val" style="width: 85%;"></div></div>
+          </div>
+          <div class="genre-progress-item">
+            <div class="genre-item-info"><span class="analytics-genre-name" data-genre-key="drama">Drama & Suspense</span><span>65%</span></div>
+            <div class="genre-bar-track"><div class="genre-bar-val" style="width: 65%;"></div></div>
+          </div>
+          <div class="genre-progress-item">
+            <div class="genre-item-info"><span class="analytics-genre-name" data-genre-key="fantasy">Fantasia & Aventura</span><span>50%</span></div>
+            <div class="genre-bar-track"><div class="genre-bar-val" style="width: 50%;"></div></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- SEÇÃO 2: ESTANTE PERSONALIZADA COM ABAS EM PÍLULA (ESTILO SCREENSHOT 2) -->
+    <section id="sectionShelf">
+      
+      <div class="shelf-section-header">
+        <h2 class="shelf-title" data-i18n="profile_shelf_title">Minha Estante de Mídias</h2>
+
+        <!-- Abas em Pílula (Pills) -->
+        <div class="shelf-pill-filters" id="shelfPillsGroup">
+          <button class="shelf-pill-btn active" data-tab="all" id="tabAll">
+            <span data-i18n="profile_shelf_tab_all">Todas as Obras</span> (<span id="pillAllCount">0</span>)
+          </button>
+          <button class="shelf-pill-btn" data-tab="plan" id="tabPlan">
+            <span data-i18n="profile_shelf_tab_plan">Quero ver</span> (<span id="pillPlanCount">0</span>)
+          </button>
+          <button class="shelf-pill-btn" data-tab="watching" id="tabWatching">
+            <span data-i18n="profile_shelf_tab_watching">Assistidos</span> (<span id="pillWatchedCount">0</span>)
+          </button>
+          <button class="shelf-pill-btn" data-tab="read" id="tabRead">
+            <span data-i18n="profile_shelf_tab_read">Lidos</span> (<span id="pillReadCount">0</span>)
+          </button>
+          <button class="shelf-pill-btn" data-tab="favorites" id="tabFavorites">
+            <span data-i18n="profile_shelf_tab_favorites">Favoritos</span> (<span id="pillFavoritesCount">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Grade de Cards da Estante -->
+      <div class="watchlist-cards-grid" id="watchlistCardsGrid">
+        <!-- Renderizado dinamicamente -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL DE EDIÇÃO DE PERFIL & AVATAR ================= -->
+  <div class="profile-modal-backdrop" id="editProfileModal">
+    <div class="profile-modal-card">
+      <button class="modal-close-x" id="closeEditModalBtn" aria-label="Fechar Modal">✕</button>
+      
+      <h2 style="font-size: 1.35rem; font-weight: 700; color: #ffffff; margin: 0 0 0.35rem 0;" data-i18n="profile_modal_title">
+        Personalizar Foto & Perfil
+      </h2>
+      <p style="font-size: 0.85rem; color: #94a3b8; margin: 0 0 1.25rem 0;" data-i18n="profile_modal_desc">
+        Altere sua foto de perfil, envie uma imagem do computador ou troque seu nome:
+      </p>
+
+      <div class="profile-feedback-box" id="profileFeedbackBox"></div>
+
+      <!-- SELETOR DE EMOJIS -->
+      <div class="avatar-preset-grid" id="avatarPresetGrid">
+        <div class="avatar-preset-item active" data-avatar="🍿" title="Pipoca">🍿</div>
+        <div class="avatar-preset-item" data-avatar="🎬" title="Cinema">🎬</div>
+        <div class="avatar-preset-item" data-avatar="🧙‍♂️" title="Mago">🧙‍♂️</div>
+        <div class="avatar-preset-item" data-avatar="🦇" title="Cavaleiro">🦇</div>
+        <div class="avatar-preset-item" data-avatar="🚀" title="Sci-Fi">🚀</div>
+        <div class="avatar-preset-item" data-avatar="👑" title="Rei">👑</div>
+        <div class="avatar-preset-item" data-avatar="🐉" title="Dragão">🐉</div>
+        <div class="avatar-preset-item" data-avatar="🎧" title="Trilha Sonora">🎧</div>
+        <div class="avatar-preset-item" data-avatar="📚" title="Livros">📚</div>
+        <div class="avatar-preset-item" data-avatar="🐱" title="Gato Cineasta">🐱</div>
+        <div class="avatar-preset-item" data-avatar="🕶️" title="Agente Secreto">🕶️</div>
+        <div class="avatar-preset-item" data-avatar="⚡" title="Herói">⚡</div>
+        <div class="avatar-preset-item" data-avatar="🤖" title="Robô">🤖</div>
+        <div class="avatar-preset-item" data-avatar="🕵️" title="Detetive">🕵️</div>
+      </div>
+
+      <!-- UPLOAD DE ARQUIVO -->
+      <label class="btn-upload-file">
+        <span>📁</span> <span data-i18n="profile_btn_upload_photo">Escolher Foto do Computador (.jpg, .png)</span>
+        <input type="file" id="customPhotoFileInput" accept="image/*" style="display: none;">
+      </label>
+
+      <!-- FORMULÁRIO DE DADOS -->
+      <form id="editProfileForm">
+        <div class="profile-form-group">
+          <label class="profile-form-label" for="editNameInput" data-i18n="profile_label_username">Nome de Exibição / Usuário</label>
+          <input type="text" id="editNameInput" class="profile-form-input" required autocomplete="username">
+        </div>
+
+        <div class="profile-form-group">
+          <label class="profile-form-label" for="editEmailInput" data-i18n="profile_label_email">E-mail Cadastrado</label>
+          <input type="email" id="editEmailInput" class="profile-form-input" disabled style="opacity: 0.6; cursor: not-allowed;">
+        </div>
+
+        <div class="profile-form-group">
+          <label class="profile-form-label" for="editPasswordInput" data-i18n="profile_label_newpass">Nova Senha (opcional)</label>
+          <input type="password" id="editPasswordInput" class="profile-form-input" data-i18n-placeholder="profile_placeholder_newpass" placeholder="Deixe em branco para manter" autocomplete="new-password">
+        </div>
+
+        <!-- SELETOR DE CATEGORIAS FAVORITAS -->
+        <div class="profile-form-group" style="margin-top: 1rem;">
+          <label class="profile-form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span data-i18n="profile_label_fav_genres">🎯 Categorias & Gêneros Favoritos</span>
+            <span style="font-size: 0.75rem; color: #38bdf8;" data-i18n="profile_helper_fav_genres">Calibra suas recomendações</span>
+          </label>
+          <div class="profile-genres-editor" id="profileGenresEditor" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); gap: 0.5rem; max-height: 150px; overflow-y: auto; padding: 0.25rem; background: rgba(11, 17, 33, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px;">
+            <!-- Gerado via JS -->
+          </div>
+        </div>
+
+        <button type="submit" class="btn-edit-profile-trigger" style="width: 100%; justify-content: center; padding: 0.7rem; margin-top: 0.5rem; font-size: 0.95rem;">
+          <span>💾</span> <span data-i18n="profile_btn_save_changes">Salvar Alterações</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // URL Base da API
+    const apiBaseUrl = window.location.origin.includes('localhost:8000') || window.location.origin.includes('127.0.0.1:8000') 
+      ? window.location.origin 
+      : 'http://localhost:8000';
+
+    // Recupera usuário atual da sessão
+    let currentUser = null;
+    try {
+      currentUser = JSON.parse(localStorage.getItem('cinebook_user'));
+    } catch (e) {}
+
+    // Garante que haja uma sessão ativa padrão (não quebra nem desloga)
+    if (!currentUser) {
+      currentUser = {
+        name: "Pedro Silva",
+        email: "pedro@cinebook.com",
+        avatar: "🚀",
+        createdAt: "26/08/2026",
+        preferredCategories: ["Ação", "Ficção Científica", "Terror", "Animação"]
+      };
+      localStorage.setItem('cinebook_user', JSON.stringify(currentUser));
+    }
+
+    let selectedAvatar = currentUser ? (currentUser.avatar || '🍿') : '🍿';
+    let currentTab = 'all'; // 'all' | 'plan' | 'watching' | 'read' | 'favorites'
+
+    // Recupera lista de obras do data.js
+    const allMedia = typeof MEDIA_DATABASE !== 'undefined' ? MEDIA_DATABASE : (typeof LOCAL_MEDIA !== 'undefined' ? LOCAL_MEDIA : []);
+
+    const GENRES_MAP_CONFIG = [
+      { key: 'action', match: ['Ação', 'Action', '动作', 'Acción', 'Боевик', 'Aksi'], pt: 'Ação', en: 'Action', es: 'Acción', fr: 'Action', zh: '动作', hi: 'एक्शन', ar: 'حركة', bn: 'অ্যাকশন', ru: 'Боевик', ur: 'ایکشن', id: 'Aksi' },
+      { key: 'adventure', match: ['Aventura', 'Adventure', 'Aventure', '冒险', 'Приключения', 'Petualangan'], pt: 'Aventura', en: 'Adventure', es: 'Aventura', fr: 'Aventure', zh: '冒险', hi: 'साहसिक', ar: 'مغامرة', bn: 'রোমাঞ্চ', ru: 'Приключения', ur: 'ایڈونچر', id: 'Petualangan' },
+      { key: 'comedy', match: ['Comédia', 'Comedy', 'Comedia', 'Comédie', '喜剧', 'Комедия', 'Komedi'], pt: 'Comédia', en: 'Comedy', es: 'Comedia', fr: 'Comédie', zh: '喜剧', hi: 'हास्य', ar: 'كوميديا', bn: 'কৌতুক', ru: 'Комедия', ur: 'مزاحیہ', id: 'Komedi' },
+      { key: 'drama', match: ['Drama', '剧情', 'Драма', 'Drame'], pt: 'Drama', en: 'Drama', es: 'Drama', fr: 'Drame', zh: '剧情', hi: 'नाटक', ar: 'دراما', bn: 'নাটক', ru: 'Драма', ur: 'ڈراما', id: 'Drama' },
+      { key: 'scifi', match: ['Ficção Científica', 'Sci-Fi', 'Science Fiction', '科幻', 'Научная фантастика', 'Fiksi Ilmiah', 'Ciencia Ficción'], pt: 'Ficção Científica', en: 'Sci-Fi', es: 'Ciencia Ficción', fr: 'Science-Fiction', zh: '科幻', hi: 'विज्ञान कथा', ar: 'خيال علمي', bn: 'বিজ্ঞান কল্পকাহিনী', ru: 'Научная фантастика', ur: 'سائنس فکشن', id: 'Fiksi Ilmiah' },
+      { key: 'fantasy', match: ['Fantasia', 'Fantasy', '奇幻', 'Fantasía', 'Fantastique', 'Фэнтези', 'Fantasi'], pt: 'Fantasia', en: 'Fantasy', es: 'Fantasía', fr: 'Fantastique', zh: '奇幻', hi: 'काल्पनिक', ar: 'خيالي', bn: 'কল্পনা', ru: 'Фэнтези', ur: 'تصوراتی', id: 'Fantasi' },
+      { key: 'horror', match: ['Terror', 'Horror', '恐怖', 'Horreur', 'Ужасы', 'Horor'], pt: 'Terror', en: 'Horror', es: 'Terror', fr: 'Horreur', zh: '恐怖', hi: 'हॉरर', ar: 'رعب', bn: 'হরর', ru: 'Ужасы', ur: 'خوفناک', id: 'Horor' },
+      { key: 'suspense', match: ['Suspense', 'Thriller', 'Триллер', '惊悚'], pt: 'Suspense', en: 'Thriller', es: 'Suspense', fr: 'Thriller', zh: '惊悚', hi: 'थ्रिलर', ar: 'إثارة وتشويق', bn: 'থ্রিলার', ru: 'Триллер', ur: 'سسپنس', id: 'Ketegangan' },
+      { key: 'romance', match: ['Romance', '爱情', 'Романтика', 'Romantis'], pt: 'Romance', en: 'Romance', es: 'Romance', fr: 'Romance', zh: '爱情', hi: 'रोमांस', ar: 'رومانسي', bn: 'রোমান্স', ru: 'Мелодрама', ur: 'رومانس', id: 'Romantis' },
+      { key: 'animation', match: ['Animação', 'Animation', 'Animación', '动画', 'Мультфильм', 'Animasi'], pt: 'Animação', en: 'Animation', es: 'Animación', fr: 'Animation', zh: '动画', hi: 'एनिमेशन', ar: 'رسوم متحركة', bn: 'অ্যানিমেশন', ru: 'Мультфильм', ur: 'اینیمیشن', id: 'Animasi' },
+      { key: 'crime', match: ['Crime', 'Crimen', '犯罪', 'Криминал', 'Kriminal'], pt: 'Crime', en: 'Crime', es: 'Crimen', fr: 'Crime', zh: '犯罪', hi: 'अपराध', ar: 'جريمة', bn: 'অপরাধ', ru: 'Криминал', ur: 'جرم', id: 'Kriminal' },
+      { key: 'mystery', match: ['Mistério', 'Mystery', 'Misterio', 'Mystère', '悬疑', 'Детектив', 'Misteri'], pt: 'Mistério', en: 'Mystery', es: 'Misterio', fr: 'Mystère', zh: '悬疑', hi: 'रहस्य', ar: 'غموض', bn: 'রহস্য', ru: 'Детектив', ur: 'معمہ', id: 'Misteri' },
+      { key: 'documentary', match: ['Documentário', 'Documentary', 'Documental', '纪录片', 'Документальный', 'Dokumenter'], pt: 'Documentário', en: 'Documentary', es: 'Documental', fr: 'Documentaire', zh: '纪录片', hi: 'वृत्तचित्र', ar: 'وثائقي', bn: 'প্রামাণ্যচিত্র', ru: 'Документальный', ur: 'دستاویزی', id: 'Dokumenter' }
+    ];
+
+    function getLocalizedGenreLabel(genreStr, lang) {
+      if (!genreStr) return '';
+      const clean = String(genreStr).trim().toLowerCase();
+      const found = GENRES_MAP_CONFIG.find(g => 
+        g.key === clean || 
+        (g.match && g.match.some(m => m.toLowerCase() === clean)) ||
+        (g.pt && g.pt.toLowerCase() === clean) ||
+        (g.en && g.en.toLowerCase() === clean)
+      );
+      if (found) {
+        return found[lang] || found.pt || found.en || genreStr;
+      }
+      return genreStr;
+    }
+
+    // Retorna estritamente a watchlist real do usuário sem re-injetar itens deletados
+    function getWatchlist() {
+      const raw = localStorage.getItem('cinebook_watchlist');
+      if (raw === null) {
+        return {};
+      }
+      try {
+        const wl = JSON.parse(raw);
+        if (typeof wl === 'object' && wl !== null) {
+          return wl;
+        }
+      } catch (e) {}
+      return {};
+    }
+
+    function renderProfileHeader() {
+      if (!currentUser) return;
+      const currentL = localStorage.getItem('cinebook_lang') || 'pt';
+
+      const dispName = document.getElementById('profileDisplayName');
+      if (dispName) dispName.textContent = currentUser.name || 'Pedro Silva';
+
+      const editName = document.getElementById('editNameInput');
+      if (editName) editName.value = currentUser.name || '';
+
+      const editEmail = document.getElementById('editEmailInput');
+      if (editEmail) editEmail.value = currentUser.email || '';
+
+      const memberSince = document.getElementById('profileMemberSince');
+      if (memberSince) {
+        const prefix = typeof t === 'function' ? (t('profile_member_since') || 'Membro desde') : 'Membro desde';
+        const dateVal = currentUser.createdAt || '2026';
+        memberSince.textContent = `${prefix} ${dateVal}`;
+      }
+
+      const statsAvgMsg = document.getElementById('profileStatsAvgMsg');
+      if (statsAvgMsg) {
+        statsAvgMsg.innerHTML = typeof t === 'function' ? t('profile_stats_avg_msg') : 'Você mantém uma média de avaliação positiva de <strong>5.0 estrelas</strong> no catálogo!';
+      }
+
+      updateAvatarDisplay(selectedAvatar);
+
+      document.querySelectorAll('.avatar-preset-item').forEach(item => {
+        item.classList.toggle('active', item.getAttribute('data-avatar') === selectedAvatar);
+      });
+
+      renderProfileGenres();
+      renderAnalyticsGenres();
+    }
+
+    function renderAnalyticsGenres() {
+      const currentL = localStorage.getItem('cinebook_lang') || 'pt';
+      const items = document.querySelectorAll('.analytics-genre-name');
+      items.forEach(el => {
+        const key = el.getAttribute('data-genre-key');
+        if (key === 'scifi') {
+          el.textContent = getLocalizedGenreLabel('scifi', currentL);
+        } else if (key === 'drama') {
+          const dramaLabel = getLocalizedGenreLabel('drama', currentL);
+          const suspenseLabel = getLocalizedGenreLabel('suspense', currentL);
+          el.textContent = `${dramaLabel} & ${suspenseLabel}`;
+        } else if (key === 'fantasy') {
+          const fantasyLabel = getLocalizedGenreLabel('fantasy', currentL);
+          const adventureLabel = getLocalizedGenreLabel('adventure', currentL);
+          el.textContent = `${fantasyLabel} & ${adventureLabel}`;
+        }
+      });
+    }
+
+    function renderProfileGenres() {
+      const currentL = localStorage.getItem('cinebook_lang') || 'pt';
+      const container = document.getElementById('profileGenresEditor');
+      const chipsContainer = document.getElementById('profileGenreChipsList');
+      const userGenres = currentUser.preferredCategories || ["Ação", "Ficção Científica", "Terror", "Animação"];
+
+      if (chipsContainer) {
+        chipsContainer.innerHTML = '';
+        userGenres.forEach(genre => {
+          const localizedGenreName = getLocalizedGenreLabel(genre, currentL);
+          const chip = document.createElement('span');
+          chip.style.cssText = 'font-size: 0.75rem; font-weight: 600; color: #e2e8f0; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); padding: 0.15rem 0.55rem; border-radius: 9999px; display: inline-flex; align-items: center; gap: 0.3rem;';
+          chip.innerHTML = `<span>${localizedGenreName}</span>`;
+          chipsContainer.appendChild(chip);
+        });
+      }
+
+      if (container) {
+        container.innerHTML = '';
+        const availableGenreKeys = [
+          "action", "adventure", "comedy", "drama", "scifi", 
+          "fantasy", "horror", "suspense", "romance", "animation", 
+          "crime", "mystery", "documentary"
+        ];
+
+        availableGenreKeys.forEach(genreKey => {
+          const genreObj = GENRES_MAP_CONFIG.find(g => g.key === genreKey);
+          const genrePtName = genreObj ? genreObj.pt : genreKey;
+          const genreLocalizedName = genreObj ? (genreObj[currentL] || genreObj.pt || genreObj.en) : genreKey;
+          
+          const isSelected = userGenres.some(g => {
+            const gClean = String(g).trim().toLowerCase();
+            return gClean === genreKey || (genreObj && genreObj.match && genreObj.match.some(m => m.toLowerCase() === gClean));
+          });
+
+          const item = document.createElement('div');
+          item.style.cssText = `
+            padding: 0.35rem 0.6rem; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+            background: ${isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
+            border: 1px solid ${isSelected ? '#38bdf8' : 'rgba(255, 255, 255, 0.1)'};
+            color: ${isSelected ? '#38bdf8' : '#cbd5e1'};
+          `;
+          item.innerHTML = `<span>${isSelected ? '✓' : '＋'}</span> <span>${genreLocalizedName}</span>`;
+          item.addEventListener('click', () => {
+            if (isSelected) {
+              currentUser.preferredCategories = userGenres.filter(g => {
+                const gClean = String(g).trim().toLowerCase();
+                return gClean !== genreKey && (!genreObj || !genreObj.match || !genreObj.match.some(m => m.toLowerCase() === gClean));
+              });
+            } else {
+              currentUser.preferredCategories = [...userGenres, genrePtName];
+            }
+            renderProfileGenres();
+          });
+          container.appendChild(item);
+        });
+      }
+    }
+
+    function updateAvatarDisplay(avatar) {
+      const display = document.getElementById('mainAvatarDisplay');
+      if (!display) return;
+      
+      const isImg = avatar.startsWith('http') || avatar.startsWith('data:image');
+      if (isImg) {
+        display.innerHTML = `<img src="${avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;">`;
+      } else {
+        display.innerHTML = avatar;
+      }
+    }
+
+    function normalizeStatus(val) {
+      if (!val) return 'plan';
+      const raw = typeof val === 'object' ? (val.status || 'plan') : String(val);
+      const lower = raw.trim().toLowerCase();
+      
+      if (lower === 'plan' || lower === 'plan-to-watch' || lower === 'quero ver' || lower === 'quero ler' || lower === 'quero') {
+        return 'plan';
+      }
+      if (lower === 'current' || lower === 'watching' || lower === 'reading' || lower === 'em andamento' || lower === 'assistindo' || lower === 'lendo') {
+        return 'watching';
+      }
+      if (lower === 'completed' || lower === 'watched' || lower === 'read' || lower === 'concluído' || lower === 'concluido' || lower === 'assistido' || lower === 'lido' || lower === 'já vi' || lower === 'já li') {
+        return 'completed';
+      }
+      if (lower === 'favorite' || lower === 'favorites' || lower === 'favorito' || lower === 'favoritos') {
+        return 'favorite';
+      }
+      return 'plan';
+    }
+
+    function calculateStats() {
+      const wl = getWatchlist();
+      let plan = 0;
+      let watched = 0;
+      let read = 0;
+      let favorites = 0;
+      let all = 0;
+
+      Object.entries(wl).forEach(([id, val]) => {
+        const status = normalizeStatus(val);
+        const item = resolveWatchlistItem(id, val);
+        const isBook = item && item.type === 'book';
+        all++;
+
+        if (status === 'plan') {
+          plan++;
+        } else if (status === 'favorite') {
+          favorites++;
+        } else if (status === 'watching' || status === 'completed') {
+          if (isBook) read++;
+          else watched++;
+        }
+      });
+
+      const ids = ['pillPlanCount', 'pillWatchedCount', 'pillReadCount', 'pillFavoritesCount', 'pillAllCount'];
+      const vals = [plan, watched, read, favorites, all];
+      ids.forEach((id, i) => { 
+        const el = document.getElementById(id);
+        if (el) el.textContent = vals[i]; 
+      });
+
+      const topIds = ['topStatPlanCount', 'topStatWatchedCount', 'topStatReadCount', 'topStatFavCount'];
+      const topVals = [plan, watched, read, favorites];
+      topIds.forEach((id, i) => { 
+        const el = document.getElementById(id);
+        if (el) el.textContent = topVals[i]; 
+      });
+
+      const totalItems = document.getElementById('statTotalItems');
+      if (totalItems) totalItems.textContent = all;
+    }
+
+    function renderGrid() {
+      calculateStats();
+      const currentL = localStorage.getItem('cinebook_lang') || 'pt';
+      const wl = getWatchlist();
+      const grid = document.getElementById('watchlistCardsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const filteredEntries = Object.entries(wl).filter(([id, val]) => {
+        const status = normalizeStatus(val);
+        const item = resolveWatchlistItem(id, val);
+        const isBook = item && item.type === 'book';
+
+        if (currentTab === 'all') return true;
+        if (currentTab === 'plan') return status === 'plan';
+        if (currentTab === 'favorites') return status === 'favorite';
+        if (currentTab === 'watching') return (status === 'watching' || status === 'completed') && !isBook;
+        if (currentTab === 'read') return (status === 'watching' || status === 'completed' || status === 'read') && isBook;
+        return true;
+      });
+
+      if (filteredEntries.length === 0) {
+        let emptyMsg = typeof t === 'function' ? (t('profile_empty_desc') || 'Você ainda não adicionou obras a esta categoria da sua estante.') : 'Você ainda não adicionou obras a esta categoria da sua estante.';
+        if (currentTab === 'favorites') emptyMsg = typeof t === 'function' ? (t('profile_empty_fav_desc') || emptyMsg) : emptyMsg;
+        if (currentTab === 'watching') emptyMsg = typeof t === 'function' ? (t('profile_empty_watch_desc') || emptyMsg) : emptyMsg;
+        if (currentTab === 'read') emptyMsg = typeof t === 'function' ? (t('profile_empty_read_desc') || emptyMsg) : emptyMsg;
+        if (currentTab === 'plan') emptyMsg = typeof t === 'function' ? (t('profile_empty_plan_desc') || emptyMsg) : emptyMsg;
+
+        const emptyTitle = typeof t === 'function' ? (t('profile_empty_title') || 'Nenhuma obra nesta categoria') : 'Nenhuma obra nesta categoria';
+        const exploreBtnText = typeof t === 'function' ? (t('profile_btn_explore') || 'Explorar Catálogo') : 'Explorar Catálogo';
+
+        grid.innerHTML = `
+          <div class="empty-watchlist-box">
+            <div style="font-size: 3.5rem; opacity: 0.8;">🍿</div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; color: #ffffff; margin: 0;">${emptyTitle}</h3>
+            <p style="font-size: 0.88rem; color: #94a3b8; max-width: 450px; margin: 0; line-height: 1.5;">
+              ${emptyMsg}
+            </p>
+            <a href="index.html" class="btn-edit-profile-trigger" style="text-decoration: none; margin-top: 0.5rem;">
+              <span>🌟</span> ${exploreBtnText}
+            </a>
+          </div>
+        `;
+        return;
+      }
+
+      filteredEntries.forEach(([id, val]) => {
+        const item = resolveWatchlistItem(id, val);
+        const status = normalizeStatus(val);
+        const isBook = item && item.type === 'book';
+        const card = document.createElement('div');
+        card.className = 'watchlist-card';
+
+        let typeLabel = 'Filme';
+        if (item.type === 'movie') {
+          typeLabel = typeof t === 'function' ? (t('nav_movies') || 'Filme') : 'Filme';
+        } else if (item.type === 'series') {
+          typeLabel = typeof t === 'function' ? (t('nav_series') || 'Série') : 'Série';
+        } else if (item.type === 'book') {
+          typeLabel = typeof t === 'function' ? (t('nav_books') || 'Livro') : 'Livro';
+        }
+        typeLabel = String(typeLabel).replace(/^[^\w\sÀ-ſЀ-ӿ一-鿿ऀ-ॿ؀-ۿঀ-৿]+/g, '').trim();
+
+        const badgeFav = typeof t === 'function' ? (t('profile_badge_favorite') || 'Favorito') : 'Favorito';
+        const badgeWatched = typeof t === 'function' ? (t('profile_badge_watched') || 'Assistido') : 'Assistido';
+        const badgeRead = typeof t === 'function' ? (t('profile_badge_read') || 'Lido') : 'Lido';
+        const badgePlanMovie = typeof t === 'function' ? (t('profile_badge_plan_movie') || 'Quero Ver') : 'Quero Ver';
+        const badgePlanBook = typeof t === 'function' ? (t('profile_badge_plan_book') || 'Quero Ler') : 'Quero Ler';
+        const badgePlanSelect = typeof t === 'function' ? (t('profile_badge_plan') || 'Quero ver/ler') : 'Quero ver/ler';
+
+        let statusLabel = `➕ ${isBook ? badgePlanBook : badgePlanMovie}`;
+        let statusColor = '#38bdf8';
+        if (status === 'favorite') {
+          statusLabel = `⭐ ${badgeFav}`;
+          statusColor = '#f59e0b';
+        } else if (status === 'watching' || status === 'completed') {
+          statusLabel = isBook ? `📖 ${badgeRead}` : `🎬 ${badgeWatched}`;
+          statusColor = '#10b981';
+        } else if (status === 'plan') {
+          statusLabel = `➕ ${isBook ? badgePlanBook : badgePlanMovie}`;
+          statusColor = '#38bdf8';
+        }
+
+        const displayTitle = typeof getMediaTitle === 'function' ? getMediaTitle(item, currentL) : (item.title || '');
+
+        const fallbackPoster = item.type === 'book' 
+          ? 'https://image.tmdb.org/t/p/w500/AeWqkAp2bAZEoj1GGd2jLc6R0LD.jpg' 
+          : (item.type === 'series' ? 'https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg' : 'https://image.tmdb.org/t/p/w500/kHkEwtUlkRrhZmYmcZ9ENTgdvh3.jpg');
+
+        card.innerHTML = `
+          <div class="watchlist-poster-wrap" title="${displayTitle}" style="cursor: pointer;">
+            <img 
+              src="${item.poster}" 
+              alt="${displayTitle}" 
+              class="watchlist-poster-img"
+              onerror="this.onerror=null; this.src='${fallbackPoster}';"
+            >
+            <span class="watchlist-type-tag">${typeLabel}</span>
+            <span class="watchlist-status-badge" style="background: rgba(11, 17, 33, 0.88); border: 1px solid ${statusColor}; color: ${statusColor};">${statusLabel}</span>
+          </div>
+          <div class="watchlist-info-wrap">
+            <h4 class="watchlist-title" title="${displayTitle}">${displayTitle}</h4>
+            <div class="watchlist-meta-row" style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; color: #94a3b8; margin: 0.15rem 0 0.4rem 0;">
+              <span>${item.year || 2026}</span>
+              <span style="color: #1ed5a9; font-weight: 700;">⭐ ${item.rating || 90}%</span>
+            </div>
+            <div class="watchlist-card-actions" style="display: flex; gap: 0.4rem; align-items: center;">
+              <select class="status-change-select" data-id="${item.id}" style="flex: 1; background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.15); color: #e2e8f0; border-radius: 6px; padding: 0.35rem 0.45rem; font-size: 0.78rem; font-weight: 600; cursor: pointer;">
+                <option value="favorite" ${status === 'favorite' ? 'selected' : ''}>⭐ ${badgeFav}</option>
+                <option value="watching" ${(status === 'watching' || status === 'completed') && !isBook ? 'selected' : ''}>🎬 ${badgeWatched}</option>
+                <option value="read" ${(status === 'watching' || status === 'completed' || status === 'read') && isBook ? 'selected' : ''}>📖 ${badgeRead}</option>
+                <option value="plan" ${status === 'plan' ? 'selected' : ''}>➕ ${badgePlanSelect}</option>
+              </select>
+              <button class="btn-remove-watchlist" data-id="${item.id}" title="Remover da lista" style="width: auto; padding: 0.35rem 0.6rem; margin: 0;">
+                🗑️
+              </button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector('.status-change-select').addEventListener('change', (e) => {
+          e.stopPropagation();
+          updateItemStatus(item.id, e.target.value);
+        });
+
+        card.querySelector('.btn-remove-watchlist').addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          removeFromWatchlist(item.id);
+        });
+
+        card.querySelector('.watchlist-poster-wrap').addEventListener('click', () => {
+          window.location.href = `detalhes.html?id=${encodeURIComponent(item.id)}`;
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function updateItemStatus(mediaId, newStatus) {
+      const wl = getWatchlist();
+      const current = wl[mediaId];
+      const item = resolveWatchlistItem(mediaId, current);
+      
+      const realStatus = newStatus === 'read' ? 'completed' : newStatus;
+
+      if (typeof current === 'object' && current !== null) {
+        current.status = realStatus;
+      } else {
+        wl[mediaId] = {
+          id: mediaId,
+          status: realStatus,
+          title: item.title,
+          type: item.type,
+          year: item.year,
+          poster: item.poster
+        };
+      }
+      localStorage.setItem('cinebook_watchlist', JSON.stringify(wl));
+      renderGrid();
+    }
+
+    function resolveWatchlistItem(id, val) {
+      let found = allMedia.find(m => m.id === id || String(m.tmdbId) === String(id) || `tmdb_${m.tmdbId}` === String(id));
+      if (found) return { ...found };
+
+      if (val && typeof val === 'object' && val.title) {
+        return {
+          id: id,
+          title: val.title,
+          originalTitle: val.originalTitle || val.title,
+          year: val.year || 2026,
+          type: val.type || (String(id).startsWith('s') ? 'series' : (String(id).startsWith('b') ? 'book' : 'movie')),
+          poster: val.poster || "https://image.tmdb.org/t/p/w500/is1U9n0e9ofg50U1T7p2WZuIwiO.jpg",
+          rating: val.rating || 90
+        };
+      }
+
+      const defaults = {
+        'm_2026_spiderman4': { title: 'Homem-Aranha: Um Novo Dia', originalTitle: 'Spider-Man: Brand New Day', year: 2026, type: 'movie', poster: 'https://image.tmdb.org/t/p/w500/kHkEwtUlkRrhZmYmcZ9ENTgdvh3.jpg', rating: 96 },
+        's_tlou': { title: 'The Last of Us: Parte II', originalTitle: 'The Last of Us Season 2', year: 2026, type: 'series', poster: 'https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg', rating: 94 },
+        'b3': { title: 'O Senhor dos Anéis: A Sociedade do Anel', originalTitle: 'The Lord of the Rings', year: 2026, type: 'book', poster: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=500&q=80', rating: 98 },
+        'm_2026_odrama': { title: 'O Drama', originalTitle: 'The Drama', year: 2026, type: 'movie', poster: 'https://image.tmdb.org/t/p/w500/tM3hbeEwJZdQAjwwt5UjFn638AY.jpg', rating: 95 },
+        's_severance': { title: 'Ruptura: 2ª Temporada', originalTitle: 'Severance Season 2', year: 2026, type: 'series', poster: 'https://image.tmdb.org/t/p/w500/9PfMSqM3qcY1f46qY32jU92GgK0.jpg', rating: 93 },
+        'm_2026_michael': { title: 'Michael: A Biografia do Rei do Pop', originalTitle: 'Michael', year: 2026, type: 'movie', poster: 'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg', rating: 95 },
+        'b1': { title: 'Duna: Crônicas de Arrakis', originalTitle: 'Dune', year: 2026, type: 'book', poster: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=500&q=80', rating: 94 },
+        'b4': { title: '1984: Edição Especial Ilustrada', originalTitle: '1984', year: 2026, type: 'book', poster: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=500&q=80', rating: 95 },
+        'm_2026_mickey17': { title: 'Mickey 17', originalTitle: 'Mickey 17', year: 2026, type: 'movie', poster: 'https://image.tmdb.org/t/p/w500/is1U9n0e9ofg50U1T7p2WZuIwiO.jpg', rating: 90 },
+        's_stranger': { title: 'Stranger Things: Temporada Final', originalTitle: 'Stranger Things Season 5', year: 2026, type: 'series', poster: 'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg', rating: 96 },
+        'b2': { title: 'Neuromancer: Edição Cyberpunk 2026', originalTitle: 'Neuromancer', year: 2026, type: 'book', poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=500&q=80', rating: 92 }
+      };
+
+      if (defaults[id]) return { id: id, ...defaults[id] };
+
+      return {
+        id: id,
+        title: val?.title || "Obra Salva",
+        originalTitle: val?.originalTitle || val?.title,
+        year: val?.year || 2026,
+        type: val?.type || (String(id).startsWith('s') ? 'series' : (String(id).startsWith('b') ? 'book' : 'movie')),
+        poster: val?.poster || "https://image.tmdb.org/t/p/w500/is1U9n0e9ofg50U1T7p2WZuIwiO.jpg",
+        rating: val?.rating || 90
+      };
+    }
+
+    function removeFromWatchlist(mediaId) {
+      const raw = localStorage.getItem('cinebook_watchlist');
+      let wl = {};
+      try { wl = JSON.parse(raw) || {}; } catch (e) {}
+      delete wl[mediaId];
+      localStorage.setItem('cinebook_watchlist', JSON.stringify(wl));
+      renderGrid();
+    }
+
+    document.querySelectorAll('.shelf-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.shelf-pill-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTab = btn.getAttribute('data-tab');
+        renderGrid();
+      });
+    });
+
+    document.getElementById('subnavTabShelf')?.addEventListener('click', () => {
+      document.querySelectorAll('.subnav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('subnavTabShelf').classList.add('active');
+      document.getElementById('sectionShelf').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('subnavTabStats')?.addEventListener('click', () => {
+      document.querySelectorAll('.subnav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('subnavTabStats').classList.add('active');
+      document.getElementById('sectionAnalytics').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    document.getElementById('subnavTabReviews')?.addEventListener('click', () => {
+      document.querySelectorAll('.subnav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('subnavTabReviews').classList.add('active');
+      document.getElementById('sectionShelf').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // Modal de Edição de Perfil
+    const editModal = document.getElementById('editProfileModal');
+    const openEditBtn = document.getElementById('openEditModalBtn');
+    const profileAvatarBtn = document.getElementById('profileAvatarBtn');
+    const closeEditBtn = document.getElementById('closeEditModalBtn');
+
+    function openModal() { editModal.classList.add('open'); }
+    function closeModal() { editModal.classList.remove('open'); }
+
+    openEditBtn?.addEventListener('click', openModal);
+    profileAvatarBtn?.addEventListener('click', openModal);
+    closeEditBtn?.addEventListener('click', closeModal);
+    editModal?.addEventListener('click', (e) => {
+      if (e.target === editModal) closeModal();
+    });
+
+    // Troca de Avatar Emoji
+    document.querySelectorAll('.avatar-preset-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-preset-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        selectedAvatar = item.getAttribute('data-avatar');
+        updateAvatarDisplay(selectedAvatar);
+      });
+    });
+
+    // Upload de Foto Customizada
+    const photoInput = document.getElementById('customPhotoFileInput');
+    photoInput?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        selectedAvatar = event.target.result;
+        document.querySelectorAll('.avatar-preset-item').forEach(i => i.classList.remove('active'));
+        updateAvatarDisplay(selectedAvatar);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Salvar Dados
+    const editForm = document.getElementById('editProfileForm');
+    const feedbackBox = document.getElementById('profileFeedbackBox');
+
+    editForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newName = document.getElementById('editNameInput').value.trim();
+      const newPass = document.getElementById('editPasswordInput').value;
+
+      feedbackBox.style.display = 'none';
+
+      if (!newName) {
+        feedbackBox.className = 'profile-feedback-box error';
+        feedbackBox.textContent = typeof t === 'function' ? (t('profile_toast_name_required') || 'O nome não pode ficar em branco.') : 'O nome não pode ficar em branco.';
+        feedbackBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        await fetch(`${apiBaseUrl}/api/user/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            name: newName,
+            avatar: selectedAvatar,
+            password: newPass || undefined,
+            preferredCategories: currentUser.preferredCategories || []
+          })
+        });
+      } catch (err) {
+        console.warn("Backend offline, atualizando localmente:", err);
+      }
+
+      currentUser.name = newName;
+      currentUser.avatar = selectedAvatar;
+      localStorage.setItem('cinebook_user', JSON.stringify(currentUser));
+
+      try {
+        const users = JSON.parse(localStorage.getItem('cinebook_registered_users')) || [];
+        const idx = users.findIndex(u => u.email.toLowerCase() === currentUser.email.toLowerCase());
+        if (idx >= 0) {
+          users[idx].name = newName;
+          users[idx].avatar = selectedAvatar;
+          users[idx].preferredCategories = currentUser.preferredCategories || [];
+          if (newPass && newPass.length >= 4) {
+            users[idx].password = newPass;
+          }
+          localStorage.setItem('cinebook_registered_users', JSON.stringify(users));
+        }
+      } catch (e) {}
+
+      feedbackBox.className = 'profile-feedback-box success';
+      feedbackBox.textContent = typeof t === 'function' ? (t('profile_toast_success') || 'Perfil e foto atualizados com sucesso! ✨') : 'Perfil e foto atualizados com sucesso! ✨';
+      feedbackBox.style.display = 'block';
+
+      renderProfileHeader();
+
+      setTimeout(() => {
+        feedbackBox.style.display = 'none';
+        closeModal();
+      }, 1200);
+    });
+
+    // Leitura de parâmetro da URL para aba inicial da estante (ex: ?shelfTab=favorites)
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialShelfTab = urlParams.get('shelfTab') || urlParams.get('tab');
+    if (initialShelfTab && ['all', 'plan', 'watching', 'read', 'favorites'].includes(initialShelfTab)) {
+      currentTab = initialShelfTab;
+      document.querySelectorAll('.shelf-pill-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('data-tab') === currentTab);
+      });
+    }
+
+    // Reage instantaneamente a mudanças de idioma
+    window.addEventListener('languageChanged', (e) => {
+      renderProfileHeader();
+      renderGrid();
+    });
+
+    // Inicialização direta
+    renderProfileHeader();
+    renderGrid();
+  </script>
+</body>
+</html>

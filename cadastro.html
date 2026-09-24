@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Crie sua conta no CINEBOOKS e comece a montar sua estante de filmes, séries e livros.">
+  <title>CINEBOOKS | Criar Conta</title>
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/i18n.js" defer></script>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060d17">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineBook">
+  <script src="js/pwa.js" defer></script>
+  <style>
+    /* ==========================================================================
+       TELA DE CADASTRO 100% NA MESMA PÁGINA (ZERO ROLAGEM / 100VH FIT)
+       ========================================================================== */
+    html, body {
+      height: 100vh;
+      max-height: 100vh;
+      overflow: hidden;
+      background-color: #0b0f1d;
+      color: #ffffff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    /* HEADER MODERNO COM GLASSMORPHISM & GRADIENTE */
+    .cine-header {
+      height: 60px;
+      min-height: 60px;
+      background: rgba(11, 15, 29, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(139, 92, 246, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .cine-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 2.2rem;
+    }
+
+    .cine-logo {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-decoration: none;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      transition: transform 0.25s ease, filter 0.25s ease;
+    }
+
+    .cine-logo:hover {
+      transform: scale(1.03);
+      filter: drop-shadow(0 0 14px rgba(192, 132, 252, 0.6));
+    }
+
+    .cine-logo-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #0d1222;
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .cine-logo-icon img, .cine-logo-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 9px;
+      display: block;
+    }
+
+    .cine-logo-text {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .logo-cine {
+      background: linear-gradient(135deg, #ffffff 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .logo-books {
+      background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cine-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cine-nav-link {
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .cine-nav-link:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .cine-nav-link.active {
+      color: #ffffff;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .cine-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    /* CONTAINER E DROPDOWN DE IDIOMAS */
+    .lang-selector-container {
+      position: relative;
+    }
+
+    .cine-lang-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.38rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .cine-lang-badge:hover {
+      color: #ffffff;
+      border-color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.15);
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+    }
+
+    .lang-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: rgba(13, 17, 33, 0.98);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      border-radius: 12px;
+      padding: 0.45rem;
+      display: none;
+      flex-direction: column;
+      min-width: 190px;
+      max-height: 380px;
+      overflow-y: auto;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(139, 92, 246, 0.2);
+      z-index: 1000;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(139, 92, 246, 0.5) transparent;
+    }
+
+    .lang-dropdown-menu::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .lang-dropdown-menu::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.4);
+      border-radius: 4px;
+    }
+
+    .lang-dropdown-menu::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+
+    .lang-dropdown-menu.open {
+      display: flex;
+      animation: dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes dropdownFade {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .lang-flag-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .lang-flag-img {
+      width: 20px;
+      height: 14px;
+      object-fit: cover;
+      border-radius: 3px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: block;
+    }
+
+    .lang-option-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.55rem 0.85rem;
+      color: #cbd5e1;
+      font-size: 0.86rem;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .lang-option-item:hover {
+      background: linear-gradient(90deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.15) 100%);
+      color: #ffffff;
+      transform: translateX(4px);
+    }
+
+    .lang-option-item.active {
+      background: rgba(139, 92, 246, 0.2);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: #a78bfa;
+      font-weight: 700;
+    }
+
+    .lang-option-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lang-check-icon {
+      margin-left: auto;
+      font-size: 0.8rem;
+      color: #38bdf8;
+      font-weight: 800;
+    }
+
+    .cine-search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .cine-search-icon {
+      position: absolute;
+      left: 0.85rem;
+      color: #64748b;
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+
+    .cine-search-box {
+      background: rgba(18, 24, 43, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 0.45rem 1rem 0.45rem 2.25rem;
+      color: #ffffff;
+      font-size: 0.85rem;
+      width: 200px;
+      outline: none;
+      font-family: inherit;
+      transition: all 0.25s ease;
+    }
+
+    .cine-search-box:focus {
+      width: 240px;
+      border-color: #8b5cf6;
+      background: rgba(18, 24, 43, 0.95);
+      box-shadow: 0 0 16px rgba(139, 92, 246, 0.35);
+    }
+
+    .cine-lang-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.35rem 0.65rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cine-lang-badge:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .cine-auth-link {
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.45rem 0.85rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .cine-auth-link:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .cine-auth-btn-pill {
+      color: #ffffff;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 0.48rem 1.15rem;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+      border: none;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cine-auth-btn-pill:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+      background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+      color: #ffffff;
+    }
+
+    /* CONTAINER PRINCIPAL (FIT TOTAL NA TELA) */
+    .cine-main-layout {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+      max-height: calc(100vh - 60px);
+      overflow: hidden;
+      background-color: #0b0f1d;
+    }
+
+    /* COLUNA ESQUERDA: FORMULÁRIO ENQUADRADO (LIGEIRAMENTE MAIOR) */
+    .cine-form-column {
+      width: 430px;
+      min-width: 390px;
+      padding: 1.5rem 2.25rem 1.5rem 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      z-index: 10;
+      height: 100%;
+    }
+
+    .cine-eyebrow {
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: #8b5cf6;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+
+    .cine-main-title {
+      font-size: 1.95rem;
+      font-weight: 800;
+      line-height: 1.18;
+      color: #ffffff;
+      margin: 0 0 0.45rem 0;
+      letter-spacing: -0.5px;
+    }
+
+    .cine-subtitle {
+      font-size: 0.95rem;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin: 0 0 1rem 0;
+    }
+
+    /* FORMULÁRIO */
+    .cine-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .cine-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .cine-label {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    .cine-input-field {
+      background-color: #12182b;
+      border: 1px solid #1e293b;
+      border-radius: 7px;
+      padding: 0.55rem 0.85rem;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .cine-input-field:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+    }
+
+    .cine-helper-text {
+      font-size: 0.74rem;
+      color: #64748b;
+      line-height: 1.3;
+    }
+
+    /* REQUISITOS DE SENHA */
+    .cine-password-reqs {
+      margin: 0.2rem 0 0 0;
+      padding-left: 1.15rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.38;
+    }
+
+    .cine-password-reqs li {
+      margin-bottom: 0.2rem;
+    }
+
+    /* BOTÃO CRIAR CONTA */
+    .cine-submit-btn {
+      width: 100%;
+      padding: 0.68rem;
+      margin-top: 0.45rem;
+      background: transparent;
+      border: 1.5px solid #7c3aed;
+      color: #c4b5fd;
+      border-radius: 7px;
+      font-size: 1.02rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .cine-submit-btn:hover {
+      background: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.55);
+    }
+
+    .cine-login-prompt {
+      font-size: 0.88rem;
+      color: #94a3b8;
+      margin-top: 0.65rem;
+    }
+
+    .cine-login-prompt a {
+      color: #a78bfa;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    /* COLUNA DIREITA: MURAL DE PÔSTERES COM ANIMAÇÃO SUAVE */
+    .cine-poster-wall-column {
+      flex: 1;
+      height: 100%;
+      padding: 1rem 2rem 1rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .poster-mosaic-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      width: 100%;
+      height: 100%;
+      max-height: 100%;
+    }
+
+    .poster-mosaic-col {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+      height: 100%;
+      will-change: transform;
+    }
+
+    /* Animação suave e contínua de flutuação alternada */
+    .poster-mosaic-col:nth-child(1) {
+      animation: subtleFloat1 7s ease-in-out infinite, entranceFade 0.6s ease-out 0.1s backwards;
+    }
+    .poster-mosaic-col:nth-child(2) {
+      animation: subtleFloat2 8s ease-in-out infinite 0.5s, entranceFade 0.6s ease-out 0.2s backwards;
+    }
+    .poster-mosaic-col:nth-child(3) {
+      animation: subtleFloat1 7.5s ease-in-out infinite 1s, entranceFade 0.6s ease-out 0.3s backwards;
+    }
+    .poster-mosaic-col:nth-child(4) {
+      animation: subtleFloat2 8.5s ease-in-out infinite 1.5s, entranceFade 0.6s ease-out 0.4s backwards;
+    }
+    .poster-mosaic-col:nth-child(5) {
+      animation: subtleFloat1 7s ease-in-out infinite 2s, entranceFade 0.6s ease-out 0.5s backwards;
+    }
+
+    @keyframes subtleFloat1 {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes subtleFloat2 {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(10px); }
+    }
+
+    @keyframes entranceFade {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .poster-mosaic-item {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+      background-color: #12182b;
+      height: 100%;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+      cursor: pointer;
+    }
+
+    .poster-mosaic-item:hover {
+      transform: scale(1.05) translateY(-4px);
+      box-shadow: 0 16px 36px rgba(124, 58, 237, 0.45);
+      border-color: rgba(167, 139, 250, 0.6);
+      z-index: 10;
+    }
+
+    .poster-mosaic-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+
+    .poster-mosaic-item:hover .poster-mosaic-img {
+      transform: scale(1.08);
+    }
+
+    /* Mensagem de Erro */
+    .cine-error-box {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      display: none;
+      margin-bottom: 0.35rem;
+    }
+
+    @media (max-width: 1050px) {
+      html, body {
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+      }
+      .cine-main-layout {
+        height: auto !important;
+        min-height: calc(100vh - 60px);
+        overflow-y: visible !important;
+      }
+      .cine-poster-wall-column { display: none; }
+      .cine-form-column { width: 100%; max-width: 480px; margin: 0 auto; padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= HEADER MODERNO GLASSMORPHIC ================= -->
+  <header class="cine-header">
+    <div class="cine-nav-left">
+      <a href="index.html" class="cine-logo" title="Voltar ao Início">
+        <div class="cine-logo-icon">
+          <img src="assets/logo.png" alt="CINEBOOKS Logo" class="cine-logo-img">
+        </div>
+        <span class="cine-logo-text"><span class="logo-cine">CINE</span> <span class="logo-books">BOOKS</span></span>
+      </a>
+      <nav class="cine-nav-links">
+        <a href="index.html?tab=movie" class="cine-nav-link" data-i18n="nav_movies">Filmes</a>
+        <a href="index.html?tab=series" class="cine-nav-link" data-i18n="nav_series">Séries</a>
+        <a href="index.html?tab=book" class="cine-nav-link" data-i18n="nav_books">Livros</a>
+        <a href="index.html?tab=people" class="cine-nav-link" data-i18n="nav_people">Pessoas</a>
+      </nav>
+    </div>
+
+    <div class="cine-nav-right">
+      <!-- Seletor de Idiomas Dropdown -->
+      <div class="lang-selector-container">
+        <div class="cine-lang-badge" id="langSelectorTrigger" title="Alterar Idioma / Change Language / Cambiar Idioma">
+          <span id="currentLangFlag" class="lang-flag-box"><img src="https://flagcdn.com/w40/br.png" srcset="https://flagcdn.com/w80/br.png 2x" alt="Português" class="lang-flag-img"></span> <span id="currentLangText">PT</span> <span style="font-size: 0.65rem; opacity: 0.7;">▼</span>
+        </div>
+        <div class="lang-dropdown-menu" id="langDropdownMenu">
+          <!-- Preenchido dinamicamente via i18n.js -->
+        </div>
+      </div>
+      
+      <a href="login.html" class="cine-auth-link" data-i18n="auth_login">Entrar</a>
+      <a href="cadastro.html" class="cine-auth-btn-pill" data-i18n="auth_register">Criar conta</a>
+    </div>
+  </header>
+
+  <!-- ================= LAYOUT PRINCIPAL (ZERO SCROLL) ================= -->
+  <main class="cine-main-layout">
+    
+    <!-- COLUNA 1: ETAPA 1 (FORMULÁRIO DE CADASTRO) -->
+    <section class="cine-form-column" id="step1Registration">
+      <div class="cine-eyebrow" data-i18n="signup_eyebrow">— CRIAR CONTA</div>
+      <h1 class="cine-main-title" data-i18n="signup_title">Seu próximo capítulo, sua próxima sessão</h1>
+      <p class="cine-subtitle" data-i18n="signup_subtitle">Crie sua conta gratuita e comece a montar sua estante.</p>
+
+      <div class="cine-error-box" id="registerErrorBox"></div>
+
+      <form class="cine-form" id="cineRegisterForm">
+        
+        <!-- Campo: Usuário -->
+        <div class="cine-input-group">
+          <label class="cine-label" for="usernameInput" data-i18n="label_username">Usuário</label>
+          <input 
+            type="text" 
+            id="usernameInput" 
+            class="cine-input-field" 
+            required 
+            maxlength="150"
+            autocomplete="username"
+            placeholder="Ex: pedrosilva"
+          >
+          <span class="cine-helper-text" data-i18n="helper_username">
+            Obrigatório. Letras, números e @/./+/-/_ apenas.
+          </span>
+        </div>
+
+        <!-- Campo: E-mail -->
+        <div class="cine-input-group">
+          <label class="cine-label" for="emailInput" data-i18n="label_email">E-mail</label>
+          <input 
+            type="email" 
+            id="emailInput" 
+            class="cine-input-field" 
+            required 
+            autocomplete="email"
+            placeholder="seuemail@exemplo.com"
+          >
+        </div>
+
+        <!-- Campo: Senha -->
+        <div class="cine-input-group">
+          <label class="cine-label" for="passwordInput" data-i18n="label_password">Senha</label>
+          <input 
+            type="password" 
+            id="passwordInput" 
+            class="cine-input-field" 
+            required 
+            minlength="8"
+            autocomplete="new-password"
+            placeholder="••••••••"
+          >
+          <ul class="cine-password-reqs">
+            <li data-i18n="req_length">Sua senha precisa conter pelo menos 8 caracteres.</li>
+            <li data-i18n="req_numeric">Sua senha não pode ser inteiramente numérica.</li>
+          </ul>
+        </div>
+
+        <!-- Campo: Confirmação de Senha -->
+        <div class="cine-input-group">
+          <label class="cine-label" for="passwordConfirmInput" data-i18n="label_password_confirm">Confirmação de senha</label>
+          <input 
+            type="password" 
+            id="passwordConfirmInput" 
+            class="cine-input-field" 
+            required 
+            autocomplete="new-password"
+            placeholder="Repita sua senha"
+          >
+        </div>
+
+        <!-- Botão Criar Conta e Ir para Etapa 2 -->
+        <button type="submit" class="cine-submit-btn" id="submitBtn">
+          Continuar & Escolher Categorias ➔
+        </button>
+
+        <div class="cine-login-prompt">
+          <span data-i18n="prompt_has_account">Já tem conta?</span> <a href="login.html" data-i18n="auth_login">Entrar</a>
+        </div>
+      </form>
+    </section>
+
+    <!-- COLUNA 1 (VARIANTE): ETAPA 2 (ESCOLHA DE CATEGORIAS E GÊNEROS FAVORITOS) -->
+    <section class="cine-form-column category-onboarding-container" id="step2Categories" style="display: none;">
+      <div class="category-step-badge">ETAPA 2 DE 2 • PREFERÊNCIAS</div>
+      <h2 class="category-onboarding-title">Quais categorias você mais gosta?</h2>
+      <p class="category-onboarding-subtitle">
+        Escolha seus gêneros preferidos para recomendarmos filmes, séries e obras feitas sob medida para seu gosto.
+      </p>
+
+      <div class="category-onboarding-toolbar" style="margin-top: 1rem;">
+        <span class="category-counter-badge" id="categoryCounterText">2 selecionadas</span>
+        <div class="category-quick-tools">
+          <button type="button" class="btn-category-tool" id="btnSelectPopular">Mais Populares</button>
+          <button type="button" class="btn-category-tool" id="btnClearSelection">Limpar</button>
+        </div>
+      </div>
+
+      <!-- Grid Interativo de Seleção de Gêneros -->
+      <div class="category-picker-grid" id="categoryPickerGrid">
+        <!-- Injetado dinamicamente via JS -->
+      </div>
+
+      <div class="category-onboarding-actions">
+        <button type="button" class="btn-complete-onboarding" id="btnFinishOnboarding">
+          <span>Salvar Gostos & Ver Recomendações</span> <span>➔</span>
+        </button>
+        <button type="button" class="btn-skip-onboarding" id="btnSkipOnboarding">
+          Pular por enquanto (posso alterar depois no meu Perfil)
+        </button>
+      </div>
+    </section>
+
+    <!-- COLUNA 2: MURAL DE PÔSTERES (DESTAQUES DA SEMANA: FILMES, SÉRIES & LIVROS) -->
+    <section class="cine-poster-wall-column" aria-label="Destaques da Semana">
+      <div class="poster-mosaic-grid">
+        
+        <!-- Coluna 1: Duna 2 (Filme) + The Last of Us (Série) -->
+        <div class="poster-mosaic-col">
+          <div class="poster-mosaic-item" title="Duna: Parte 2 (Filme Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/zjuI52fmUS1YGMQm53UYTTgOg0K.jpg" 
+              alt="Duna: Parte 2" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/zjuI52fmUS1YGMQm53UYTTgOg0K.jpg';"
+            >
+          </div>
+          <div class="poster-mosaic-item" title="The Last of Us (Série Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg" 
+              alt="The Last of Us" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/dmo6TYuuJgaYinXBPjrgG9mB5od.jpg';"
+            >
+          </div>
+        </div>
+
+        <!-- Coluna 2: Oppenheimer (Filme) + Duna - Livro (Edição Definitiva) -->
+        <div class="poster-mosaic-col">
+          <div class="poster-mosaic-item" title="Oppenheimer (Filme Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg" 
+              alt="Oppenheimer" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg';"
+            >
+          </div>
+          <div class="poster-mosaic-item" title="Duna - Livro (Livro Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/zjuI52fmUS1YGMQm53UYTTgOg0K.jpg" 
+              alt="Livro Duna" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/zjuI52fmUS1YGMQm53UYTTgOg0K.jpg';"
+            >
+          </div>
+        </div>
+
+        <!-- Coluna 3: Interestelar (Filme) + Stranger Things (Série) -->
+        <div class="poster-mosaic-col">
+          <div class="poster-mosaic-item" title="Interestelar (Filme Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" 
+              alt="Interestelar" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg';"
+            >
+          </div>
+          <div class="poster-mosaic-item" title="Stranger Things (Série Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg" 
+              alt="Stranger Things" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg';"
+            >
+          </div>
+        </div>
+
+        <!-- Coluna 4: Homem-Aranha no Aranhaverso (Filme) + A Casa do Dragão (Série) -->
+        <div class="poster-mosaic-col">
+          <div class="poster-mosaic-item" title="Homem-Aranha: Através do Aranhaverso (Filme Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg" 
+              alt="Homem-Aranha: Através do Aranhaverso" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/8Vt6mWEReuy4Of61Lnj5Xj704m8.jpg';"
+            >
+          </div>
+          <div class="poster-mosaic-item" title="A Casa do Dragão (Série Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/oKJDm4QCKbp6mR4FnxXrFlPJP8Y.jpg" 
+              alt="A Casa do Dragão" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/oKJDm4QCKbp6mR4FnxXrFlPJP8Y.jpg';"
+            >
+          </div>
+        </div>
+
+        <!-- Coluna 5: O Senhor dos Anéis (Livro) + Breaking Bad (Série) -->
+        <div class="poster-mosaic-col">
+          <div class="poster-mosaic-item" title="O Senhor dos Anéis (Livro Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/tlvsNCwWEIgwAM23aNzTmMIcPEZ.jpg" 
+              alt="O Senhor dos Anéis" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/tlvsNCwWEIgwAM23aNzTmMIcPEZ.jpg';"
+            >
+          </div>
+          <div class="poster-mosaic-item" title="Breaking Bad (Série Destaque)">
+            <img 
+              src="https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg" 
+              alt="Breaking Bad" 
+              class="poster-mosaic-img"
+              onerror="this.onerror=null; this.src='https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg';"
+            >
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const apiBaseUrl = window.location.origin.includes('localhost:8000') || window.location.origin.includes('127.0.0.1:8000') 
+      ? window.location.origin 
+      : 'http://localhost:8000';
+
+    const form = document.getElementById('cineRegisterForm');
+    const errorBox = document.getElementById('registerErrorBox');
+    const step1Section = document.getElementById('step1Registration');
+    const step2Section = document.getElementById('step2Categories');
+
+    // Catálogo de Gêneros e Categorias Populares
+    const ONBOARDING_GENRES = [
+      { key: 'action', name: 'Ação', popular: true },
+      { key: 'adventure', name: 'Aventura', popular: true },
+      { key: 'scifi', name: 'Ficção Científica', popular: true },
+      { key: 'comedy', name: 'Comédia', popular: true },
+      { key: 'drama', name: 'Drama', popular: true },
+      { key: 'fantasy', name: 'Fantasia', popular: true },
+      { key: 'horror', name: 'Terror', popular: true },
+      { key: 'suspense', name: 'Suspense', popular: true },
+      { key: 'romance', name: 'Romance', popular: false },
+      { key: 'animation', name: 'Animação', popular: true },
+      { key: 'crime', name: 'Crime', popular: false },
+      { key: 'mystery', name: 'Mistério', popular: false },
+      { key: 'documentary', name: 'Documentário', popular: false }
+    ];
+
+    let selectedGenresSet = new Set(['scifi', 'action']);
+    let createdUserTemp = null;
+
+    function getRegisteredUsers() {
+      try {
+        const list = JSON.parse(localStorage.getItem('cinebook_registered_users'));
+        if (Array.isArray(list) && list.length > 0) return list;
+      } catch (e) {}
+      const defaultList = [
+        {
+          id: 1,
+          name: 'pedro',
+          email: 'pedro@cinebook.com',
+          password: '123456',
+          avatar: 'P',
+          preferredCategories: ['scifi', 'action'],
+          createdAt: 'Conta Demo'
+        }
+      ];
+      localStorage.setItem('cinebook_registered_users', JSON.stringify(defaultList));
+      return defaultList;
+    }
+
+    function saveRegisteredUser(userRecord) {
+      const list = getRegisteredUsers();
+      const index = list.findIndex(u => u.email.toLowerCase() === userRecord.email.toLowerCase() || u.name.toLowerCase() === userRecord.name.toLowerCase());
+      if (index >= 0) {
+        list[index] = userRecord;
+      } else {
+        list.push(userRecord);
+      }
+      localStorage.setItem('cinebook_registered_users', JSON.stringify(list));
+    }
+
+    // Renderiza a grade interativa de escolha de categorias
+    function renderCategoryPicker() {
+      const grid = document.getElementById('categoryPickerGrid');
+      const counter = document.getElementById('categoryCounterText');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      ONBOARDING_GENRES.forEach(genre => {
+        const isSelected = selectedGenresSet.has(genre.key);
+        const card = document.createElement('div');
+        card.className = `category-choice-card ${isSelected ? 'selected' : ''}`;
+        card.setAttribute('data-key', genre.key);
+        card.style.padding = '0.85rem 0.6rem';
+        card.innerHTML = `
+          <div class="category-choice-check">✓</div>
+          <span class="category-choice-name" style="font-size: 0.85rem; font-weight: 600;">${genre.name}</span>
+        `;
+
+        card.addEventListener('click', () => {
+          if (selectedGenresSet.has(genre.key)) {
+            selectedGenresSet.delete(genre.key);
+          } else {
+            selectedGenresSet.add(genre.key);
+          }
+          renderCategoryPicker();
+        });
+
+        grid.appendChild(card);
+      });
+
+      if (counter) {
+        const count = selectedGenresSet.size;
+        counter.textContent = count === 0 
+          ? 'Nenhuma selecionada (clique para escolher)' 
+          : (count === 1 ? '1 categoria selecionada' : `${count} categorias selecionadas`);
+      }
+    }
+
+    // Botões de Ação Rápida
+    document.getElementById('btnSelectPopular')?.addEventListener('click', () => {
+      ONBOARDING_GENRES.filter(g => g.popular).forEach(g => selectedGenresSet.add(g.key));
+      renderCategoryPicker();
+    });
+
+    document.getElementById('btnClearSelection')?.addEventListener('click', () => {
+      selectedGenresSet.clear();
+      renderCategoryPicker();
+    });
+
+    // Submissão do Passo 1 (Criar Conta)
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('usernameInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      const passwordConfirm = document.getElementById('passwordConfirmInput').value;
+
+      errorBox.style.display = 'none';
+
+      if (password !== passwordConfirm) {
+        errorBox.textContent = 'As senhas não coincidem. Por favor, verifique.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 8) {
+        errorBox.textContent = 'A senha precisa conter pelo menos 8 caracteres.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      if (/^\d+$/.test(password)) {
+        errorBox.textContent = 'Sua senha não pode ser inteiramente numérica.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      // Verifica se usuário ou e-mail já existe localmente
+      const registered = getRegisteredUsers();
+      const alreadyExists = registered.some(u => u.email.toLowerCase() === email.toLowerCase() || u.name.toLowerCase() === username.toLowerCase());
+      if (alreadyExists) {
+        errorBox.textContent = 'Já existe uma conta cadastrada com este e-mail ou nome de usuário. Faça login ou use outro.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      const initialPrefs = Array.from(selectedGenresSet);
+
+      const newUser = {
+        id: Date.now(),
+        name: username,
+        email: email,
+        password: password,
+        avatar: '🍿',
+        preferredCategories: initialPrefs,
+        createdAt: new Date().toLocaleDateString('pt-BR')
+      };
+
+      createdUserTemp = newUser;
+
+      // Sempre persiste no registro local
+      saveRegisteredUser(newUser);
+
+      // Tenta enviar para o backend se disponível
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: username,
+            email: email,
+            password: password,
+            avatar: '🍿',
+            preferredCategories: initialPrefs
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.success) {
+          createdUserTemp = data.user;
+          localStorage.setItem('cinebook_user', JSON.stringify(data.user));
+        }
+      } catch (err) {
+        console.warn("Backend offline, continuando em modo local...");
+      }
+
+      localStorage.setItem('cinebook_user', JSON.stringify(createdUserTemp));
+
+      // Avança suavemente para a Etapa 2 (Escolha de Categorias Favoritas)
+      step1Section.style.display = 'none';
+      step2Section.style.display = 'block';
+      renderCategoryPicker();
+    });
+
+    // Finalizar Onboarding e Salvar Preferências
+    async function completeCategoryOnboarding() {
+      const finalPrefs = selectedGenresSet.size > 0 ? Array.from(selectedGenresSet) : ['scifi', 'action'];
+
+      let user = null;
+      try {
+        user = JSON.parse(localStorage.getItem('cinebook_user')) || createdUserTemp;
+      } catch (e) {
+        user = createdUserTemp;
+      }
+
+      if (user) {
+        user.preferredCategories = finalPrefs;
+        localStorage.setItem('cinebook_user', JSON.stringify(user));
+        saveRegisteredUser(user);
+
+        // Atualiza backend se disponível
+        try {
+          await fetch(`${apiBaseUrl}/api/user/update`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.id,
+              preferredCategories: finalPrefs
+            })
+          });
+        } catch (err) {}
+      }
+
+      // Redireciona para o catálogo já com recomendações personalizadas
+      window.location.href = 'index.html?onboarded=true';
+    }
+
+    document.getElementById('btnFinishOnboarding')?.addEventListener('click', completeCategoryOnboarding);
+    document.getElementById('btnSkipOnboarding')?.addEventListener('click', completeCategoryOnboarding);
+  </script>
+</body>
+</html>

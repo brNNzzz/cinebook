@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sem conexão • CineBook</title>
+  <meta name="theme-color" content="#060d17">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <style>
+    /* Estilos embutidos de propósito: esta página precisa funcionar
+       mesmo que o CSS principal não esteja em cache. */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #060d17;
+      color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      text-align: center;
+    }
+
+    .wrap { max-width: 420px; }
+
+    .logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      margin: 0 auto 28px;
+      display: block;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(90deg, #1ed5a9 0%, #01b4e4 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 0.97rem;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    button {
+      font: inherit;
+      font-weight: 600;
+      color: #041018;
+      background: linear-gradient(90deg, #1ed5a9 0%, #01b4e4 100%);
+      border: 0;
+      border-radius: 9999px;
+      padding: 13px 34px;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 24px rgba(30, 213, 169, .3);
+    }
+
+    .hint {
+      margin-top: 26px;
+      font-size: .82rem;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <img src="assets/icons/icon-192.png" alt="CineBook" class="logo">
+    <h1>Você está offline</h1>
+    <p>
+      O CineBook não conseguiu falar com a internet agora. As páginas que você
+      já visitou continuam disponíveis, mas buscas e novidades precisam de conexão.
+    </p>
+    <button type="button" id="retryBtn">Tentar novamente</button>
+    <p class="hint">A página recarrega sozinha assim que a conexão voltar.</p>
+  </div>
+
+  <script>
+    document.getElementById('retryBtn').addEventListener('click', function () {
+      location.reload();
+    });
+
+    // Volta sozinho quando a rede reaparecer.
+    window.addEventListener('online', function () {
+      location.reload();
+    });
+  </script>
+</body>
+
+</html>
