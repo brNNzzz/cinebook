@@ -21,7 +21,7 @@
   /* Cores de Texto */
   --text-primary: #ffffff;
   --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-muted: #8391a7;
   --text-highlight: #38bdf8;
 
   /* Bordas e Sombras */
@@ -313,6 +313,8 @@ body {
    ========================================================================== */
 .lang-selector-container {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .cine-lang-badge {
@@ -745,7 +747,7 @@ body {
 }
 
 .dot-sep {
-  color: #64748b;
+  color: #8391a7;
 }
 
 /* Barras de Avaliação (Público & Crítica) */
@@ -1089,7 +1091,7 @@ body {
 }
 
 .people-search-input::placeholder {
-  color: #64748b;
+  color: #8391a7;
   font-size: 0.95rem;
 }
 
@@ -1230,6 +1232,7 @@ body {
   scroll-behavior: smooth;
   padding: 0.15rem 0.25rem;
   width: 100%;
+  min-height: 39px; /* reserva a altura das categorias antes do JS preenchê-las (evita CLS) */
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -2327,7 +2330,8 @@ body {
   gap: 2rem;
 }
 
-.site-footer-col h4 {
+.site-footer-col h4,
+.site-footer-col .site-footer-heading {
   margin: 0 0 1rem;
   color: #fff;
   font-size: 0.8rem;
@@ -3720,7 +3724,7 @@ body {
 }
 
 .review-custom-textarea::placeholder {
-  color: #64748b;
+  color: #8391a7;
 }
 
 .review-box-footer {
@@ -4954,4 +4958,36 @@ img, video, iframe, svg { max-width: 100%; }
 
   /* Textos longos (títulos, e-mails, links) quebram em vez de empurrar a tela */
   h1, h2, h3, p, .card-title, .details-main-title { overflow-wrap: anywhere; }
+}
+
+/* Reserva espaço para a lista de estreias (evita o rodapé "pular" quando ela carrega) */
+.up-list { min-height: 60vh; }
+
+/* Página de detalhes carregando: reserva o espaço sem mostrar conteúdo
+   provisório, para nada mudar de lugar quando os dados chegam (CLS). */
+.details-loading .details-hero-info > :not(.details-title-row),
+.details-loading .details-title-row > :not(.details-main-title),
+.details-loading .details-content-wrapper {
+  visibility: hidden;
+}
+
+/* Carrossel no computador: altura fixa para o destaque não empurrar a página
+   quando um título ocupa duas linhas (evita CLS). Títulos longos param em 2 linhas. */
+@media (min-width: 769px) {
+  .hero-main-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .hero-slide-main {
+    min-height: 415px;
+  }
+}
+
+/* O conteúdo principal reserva espaço enquanto o catálogo carrega, para o
+   rodapé não aparecer no meio da tela e depois "descer". */
+.main-content {
+  min-height: 60vh;
 }

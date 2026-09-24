@@ -40,7 +40,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const mediaId = params.get('id') || 'm1';
 
-  await loadMediaDetails(mediaId);
+  // Enquanto a obra carrega, o corpo da página fica invisível (mas ocupando
+  // espaço) para o conteúdo não "pular" quando os dados chegam (CLS).
+  const revealPage = () => document.body.classList.remove('details-loading');
+  const revealTimer = setTimeout(revealPage, 6000);
+  try {
+    await loadMediaDetails(mediaId);
+  } finally {
+    clearTimeout(revealTimer);
+    revealPage();
+  }
 
   // Reage à mudança de idioma
   window.addEventListener('languageChanged', async (e) => {
@@ -700,6 +709,7 @@ async function openPersonModal(person) {
 
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.inert = false;
 
   // Busca dados na API TMDb
   if (typeof TMDB !== 'undefined') {
@@ -838,6 +848,7 @@ function closePersonModal() {
   if (modal) {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
+    modal.inert = true;
   }
 }
 
@@ -1118,7 +1129,7 @@ async function loadRecommendations(item) {
         <img src="${rec.poster}" alt="${rec.title}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${rec.type === 'book' && typeof generateBookCover === 'function' ? generateBookCover(rec.title, rec.director) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80'}';"/>
       </div>
       <div class="card-content" style="padding: 0.9rem;">
-        <h4 class="card-title" style="font-size: 0.9rem;">${rec.title}</h4>
+        <h3 class="card-title" style="font-size: 0.9rem;">${rec.title}</h3>
         <div class="card-meta" style="font-size: 0.78rem;">${rec.year} • ${rec.director || ''}</div>
         <div class="card-genres">${translatedGenres.slice(0, 2).join(' • ')}</div>
       </div>

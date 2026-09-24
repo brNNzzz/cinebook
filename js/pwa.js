@@ -269,7 +269,7 @@
     var btn = document.createElement('button');
     btn.id = 'pwa-install-btn';
     btn.type = 'button';
-    btn.setAttribute('aria-label', 'Instalar o CineBook como aplicativo');
+    btn.title = 'Instalar o CineBook como aplicativo';
     btn.innerHTML =
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" ' +
       'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +

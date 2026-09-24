@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.6.0';
+const VERSION = 'v1.6.1';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -67,6 +67,7 @@ const STATIC_ASSETS = [
   '/js/details.js',
   '/js/pwa.js',
   '/assets/logo.png',
+  '/assets/logo-96.png',
   '/assets/icons/icon-192.png',
   '/assets/icons/icon-512.png',
   '/assets/icons/apple-touch-icon.png',

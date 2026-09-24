@@ -87,6 +87,36 @@ const WIDTHS = [320, 360, 390, 768];
   blocked.length === 0 ? pass('nenhuma página impede o zoom com os dedos') : fail('zoom bloqueado em: ' + blocked.join(', '));
   await ctx.close();
 
+  console.log('\n=== 4. Páginas não "pulam" ao carregar (CLS) ===');
+  for (const [w, h] of [[412, 823], [1350, 940]]) {
+    const c = await browser.newContext({ serviceWorkers: 'block', viewport: { width: w, height: h }, isMobile: w < 500 });
+    await c.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.abort());
+    const pg = await c.newPage();
+    await pg.addInitScript(() => {
+      window.__cls = 0;
+      new PerformanceObserver(l => l.getEntries().forEach(e => { if (!e.hadRecentInput) window.__cls += e.value; }))
+        .observe({ type: 'layout-shift', buffered: true });
+    });
+    for (const id of ['index.html', 'index.html?tab=book', 'detalhes.html?id=m_2026_spiderman4', 'detalhes.html?id=b1']) {
+      await pg.goto(`${BASE}/${id}`);
+      await pg.waitForTimeout(2500);
+      const cls = await pg.evaluate(() => window.__cls);
+      cls < 0.1 ? pass(`${w}px ${id}: CLS ${cls.toFixed(3)} (bom é abaixo de 0,1)`) : fail(`${w}px ${id}: CLS ${cls.toFixed(3)}`);
+    }
+    await c.close();
+  }
+
+  console.log('\n=== 5. Janelas fechadas não recebem foco do teclado ===');
+  const c5 = await browser.newContext({ serviceWorkers: 'block' });
+  await c5.route(/^https?:\/\/(?!127\.0\.0\.1|localhost)/, r => r.abort());
+  const p5 = await c5.newPage();
+  for (const p of ['index.html', 'detalhes.html?id=m_2026_spiderman4']) {
+    await p5.goto(BASE + '/' + p, { waitUntil: 'domcontentloaded' });
+    const bad = await p5.evaluate(() => [...document.querySelectorAll('[aria-hidden="true"].modal-backdrop')].filter(m => !m.inert).map(m => m.id));
+    bad.length === 0 ? pass(`${p}: janelas fechadas estão inertes`) : fail(`${p}: janelas focáveis mesmo fechadas: ${bad.join(', ')}`);
+  }
+  await c5.close();
+
   await browser.close();
   console.log('\n=== fim ===');
 })();

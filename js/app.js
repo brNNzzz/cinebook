@@ -354,6 +354,7 @@ function openAuthModal(mode = 'login') {
 
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.inert = false;
 }
 
 function closeAuthModal() {
@@ -364,6 +365,7 @@ function closeAuthModal() {
   if (authTabs) authTabs.style.display = 'flex';
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
+  modal.inert = true;
 }
 
 async function handleLoginSubmit(e) {
@@ -747,12 +749,16 @@ const HeroCarousel = {
     const displaySynopsis = typeof getMediaSynopsis === 'function' ? getMediaSynopsis(item, currentL) : (item.synopsis || item.tagline);
 
     if (posterImg) {
+      // Se o pôster não carregar, usa uma capa gerada na hora (sem rede).
+      // Antes a troca apontava para outra imagem externa sem desligar o
+      // onerror: sem internet, as duas falhavam em ciclo infinito e a página
+      // travava (foi o que o Lighthouse acusou).
+      const fallbackPoster = typeof generateBookCover === 'function' ? generateBookCover(displayTitle, item.director || '') : '';
       posterImg.onerror = () => {
-        posterImg.src = item.type === 'book'
-          ? 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=500&q=80'
-          : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
+        posterImg.onerror = null;
+        if (fallbackPoster) posterImg.src = fallbackPoster;
       };
-      posterImg.src = item.poster || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';
+      posterImg.src = item.poster || fallbackPoster;
       posterImg.alt = displayTitle;
     }
     if (posterFrame) posterFrame.onclick = () => {
@@ -1525,6 +1531,7 @@ async function openPersonModal(personId) {
 
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.inert = false;
 
   let tmdbNumericId = !isNaN(Number(cleanId)) ? Number(cleanId) : null;
 
@@ -1696,6 +1703,7 @@ function closePersonModal() {
   if (modal) {
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
+    modal.inert = true;
   }
 }
 
@@ -1881,7 +1889,7 @@ async function openModal(mediaId) {
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
 
       card.innerHTML = `
-        <img src="${photoSrc}" alt="${person.name}" class="cast-photo" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';"/>
+        <img src="${photoSrc}" alt="${person.name}" class="cast-photo" onerror="this.onerror=null; this.style.visibility='hidden';"/>
         <div class="cast-name">${person.name}</div>
         <div class="cast-role">${person.role}</div>
       `;
@@ -1939,6 +1947,7 @@ async function openModal(mediaId) {
 
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.inert = false;
   document.body.style.overflow = 'hidden';
 }
 
@@ -1948,6 +1957,7 @@ function closeModal() {
   modalTrailerContainer.innerHTML = '';
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
+  modal.inert = true;
   document.body.style.overflow = '';
   AppState.currentModalMedia = null;
 }
@@ -1991,7 +2001,7 @@ async function loadRecommendations(currentItem) {
     const card = document.createElement('div');
     card.className = 'rec-card';
     card.innerHTML = `
-      <img src="${rec.backdrop || rec.poster}" alt="${rec.title}" class="rec-poster" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';"/>
+      <img src="${rec.backdrop || rec.poster}" alt="${rec.title}" class="rec-poster" onerror="this.onerror=null; this.style.visibility='hidden';"/>
       <div class="rec-info">
         <div class="rec-title">${rec.title}</div>
         <div class="rec-meta">
@@ -2205,12 +2215,14 @@ async function openStatsModal() {
 
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
+  modal.inert = false;
 }
 
 function closeStatsModal() {
   const modal = document.getElementById('statsModal');
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
+  modal.inert = true;
 }
 
 // ==========================================
