@@ -29,6 +29,9 @@
 
   var swRegistration = null;
   var refreshing = false;
+  // Só recarrega na troca de versão se a página JÁ era controlada por um
+  // service worker (atualização). Na primeira visita não precisa recarregar.
+  var hadController = !!navigator.serviceWorker.controller;
 
   window.addEventListener('load', function () {
     navigator.serviceWorker
@@ -38,7 +41,7 @@
 
         // Já existe uma versão nova esperando (usuário abriu outra aba antes)
         if (reg.waiting && navigator.serviceWorker.controller) {
-          showUpdateToast(reg.waiting);
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
 
         reg.addEventListener('updatefound', function () {
@@ -48,11 +51,13 @@
           incoming.addEventListener('statechange', function () {
             // "installed" + já existe um controller = é uma ATUALIZAÇÃO,
             // não a primeira instalação.
+            // A versão nova agora assume sozinha (skipWaiting no sw.js) e a
+            // página recarrega uma vez — não precisa mais do aviso.
             if (
               incoming.state === 'installed' &&
               navigator.serviceWorker.controller
             ) {
-              showUpdateToast(incoming);
+              incoming.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         });
@@ -64,7 +69,7 @@
 
   // Recarrega uma única vez quando o SW novo assume o controle.
   navigator.serviceWorker.addEventListener('controllerchange', function () {
-    if (refreshing) return;
+    if (refreshing || !hadController) return;
     refreshing = true;
     window.location.reload();
   });

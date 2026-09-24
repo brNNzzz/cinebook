@@ -665,12 +665,18 @@ body {
   opacity: 0.35 !important;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .hero-slide-main,
-  .hero-carousel-backdrop {
-    transition: none !important;
-  }
+/* "Reduzir movimento" no sistema: o mesmo deslize, curto e rápido */
+.hero-slide-main.gentle {
+  transition: opacity 0.2s ease-out, transform 0.25s ease-out;
 }
+.hero-slide-main.gentle.slide-out-left,
+.hero-slide-main.gentle.slide-out-right {
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+}
+.hero-slide-main.gentle.slide-out-left,
+.hero-slide-main.gentle.slide-in-left { transform: translateX(-32px); }
+.hero-slide-main.gentle.slide-out-right,
+.hero-slide-main.gentle.slide-in-right { transform: translateX(32px); }
 
 .hero-poster-col {
   display: flex;

@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.3.0';
+const VERSION = 'v1.4.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -161,6 +161,13 @@ self.addEventListener('install', (event) => {
           }
         })
       );
+
+      // Versão nova assume na hora, sem esperar o usuário clicar em
+      // "atualizar". Antes, quem tinha o app instalado continuava rodando o
+      // código antigo (carrossel sem deslizar, livros sem capa...) até achar
+      // e clicar no aviso. O js/pwa.js recarrega a página uma única vez
+      // quando a troca acontece.
+      await self.skipWaiting();
     })()
   );
 });
@@ -264,7 +271,9 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkFirst(request, cacheName, limit, timeoutMs) {
   const cache = await caches.open(cacheName);
   try {
-    const networkPromise = fetch(request);
+    // cache: 'no-cache' = sempre confere com o servidor, ignorando cópias
+    // antigas guardadas pelo próprio navegador (cache HTTP).
+    const networkPromise = fetch(request, { cache: 'no-cache' });
     const fresh = timeoutMs
       ? await Promise.race([
           networkPromise,
@@ -336,8 +345,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ---- Capas de livros do Google ----
-  if (host === 'books.google.com' || host === 'books.googleusercontent.com') {
+  // ---- Open Library (livros, reserva do Google Books) ----
+  if (host === 'openlibrary.org' ||
+      (url.origin === self.location.origin && url.pathname.startsWith('/olib-api/'))) {
+    event.respondWith(networkFirst(request, CACHE_API, API_CACHE_LIMIT));
+    return;
+  }
+
+  // ---- Capas de livros (Google e Open Library) ----
+  if (host === 'books.google.com' || host === 'books.googleusercontent.com' || host === 'covers.openlibrary.org') {
     event.respondWith(cacheFirst(request, CACHE_IMG, IMG_CACHE_LIMIT));
     return;
   }

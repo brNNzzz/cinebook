@@ -672,7 +672,11 @@ const HeroCarousel = {
     const token = (this._slideToken = (this._slideToken || 0) + 1);
     this.renderDashes(); // o tracinho ativo acompanha o clique na hora
 
-    if (!direction || !slideMain || reduceMotion || !this._hasRendered) {
+    // "Reduzir movimento" ligado no sistema (comum no Windows com efeitos de
+    // animação desligados): continua deslizando, só que curto e mais rápido.
+    if (slideMain) slideMain.classList.toggle('gentle', !!reduceMotion);
+
+    if (!direction || !slideMain || !this._hasRendered) {
       if (slideMain) slideMain.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
       if (backdrop) backdrop.classList.remove('backdrop-dim');
       this.fillSlide();
@@ -704,7 +708,7 @@ const HeroCarousel = {
       slideMain.classList.remove(inClass);
       if (backdrop) backdrop.classList.remove('backdrop-dim');
       this.preloadNeighbors();
-    }, 300);
+    }, reduceMotion ? 180 : 300);
   },
 
   /** Baixa os pôsteres vizinhos antes, para não "piscar" ao entrar. */
@@ -2640,8 +2644,10 @@ async function loadBooksForTab() {
   };
 
   try {
+    // As capas dos destaques vão aparecendo conforme chegam (onProgress),
+    // sem esperar os 40 livros.
     const [enrichedCount, feed] = await Promise.all([
-      GoogleBooks.enrichLocalBooks(AppState.mediaList.filter(m => m.type === 'book')),
+      GoogleBooks.enrichLocalBooks(AppState.mediaList.filter(m => m.type === 'book'), 3, refresh),
       GoogleBooks.nextFeedPage(true)
     ]);
     addBooksToMediaList(feed);

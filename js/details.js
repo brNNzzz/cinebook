@@ -67,7 +67,7 @@ async function loadMediaDetails(mediaId) {
   }
 
   // 1.1 Livro do Google Books (id "gb_...") ou destaque local de livro
-  if (!item && /^gb_/i.test(idStr) && typeof GoogleBooks !== 'undefined') {
+  if (!item && /^(gb|ol)_/i.test(idStr) && typeof GoogleBooks !== 'undefined') {
     item = await GoogleBooks.getVolume(idStr);
     if (!item) {
       document.getElementById('detailsMainTitle').textContent = 'Livro não encontrado';

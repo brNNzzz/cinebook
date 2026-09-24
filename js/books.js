@@ -9,18 +9,28 @@
  *   sinopse, páginas e links de verdade.
  * - Respostas ficam guardadas no navegador por 7 dias, para não gastar a
  *   cota da API a cada visita.
- * - Ordem das chamadas: direto no Google (cota por usuário) e, se falhar,
- *   pelo proxy /gbooks-api do Netlify (ver netlify.toml).
+ * - Ordem das chamadas: direto no Google e, se falhar, pelo proxy
+ *   /gbooks-api do Netlify (ver netlify.toml).
+ * - SEM CHAVE, o Google Books usa uma cota diária GLOBAL, dividida com todos
+ *   os sites que também não usam chave — quando ela acaba, ele responde 429
+ *   para todo mundo. Nesse caso o site pula o Google por algumas horas e
+ *   busca tudo (capas, busca, vitrine, detalhes) na Open Library, que é
+ *   aberta e não exige chave. Com uma chave própria em API_KEY, o Google
+ *   volta a ser a fonte principal.
  * ---------------------------------------------------------------------------
  */
 
 const GOOGLE_BOOKS_CONFIG = {
   BASE_URL: 'https://www.googleapis.com/books/v1',
   PROXY_PATH: '/gbooks-api',
-  // Opcional. Sem chave, a cota é contada por usuário (IP), o que costuma
-  // bastar. Com chave (console.cloud.google.com > Books API), a cota passa a
-  // ser do projeto inteiro.
+  // Opcional, mas recomendado. Sem chave, o Google divide uma cota diária
+  // global com o mundo inteiro e costuma responder 429 ("cota esgotada").
+  // Crie uma em console.cloud.google.com > APIs > "Books API" > Credenciais,
+  // restrinja ao domínio do site e cole aqui. Sem chave, o site usa a Open
+  // Library como fonte reserva automaticamente.
   API_KEY: '',
+  // Depois de um 429/403, quanto tempo fica sem tentar o Google de novo.
+  DOWN_COOLDOWN_MS: 6 * 60 * 60 * 1000,
   CACHE_KEY: 'cinebook_gbooks_cache_v1',
   CACHE_TTL_MS: 7 * 24 * 60 * 60 * 1000,
   CACHE_MAX_ENTRIES: 250,
@@ -76,6 +86,29 @@ const LOCAL_BOOK_LOOKUP = {
   b40: { title: 'A Menina que Roubava Livros', author: 'Zusak', original: 'The Book Thief', year: 2005 }
 };
 
+/** Open Library: fonte reserva, aberta e sem chave. */
+const OPEN_LIBRARY_CONFIG = {
+  BASE_URL: 'https://openlibrary.org',
+  COVERS_URL: 'https://covers.openlibrary.org/b/id',
+  PROXY_PATH: '/olib-api',
+  // Só os campos usados — pedido da própria Open Library para aliviar o servidor.
+  FIELDS: 'key,title,author_name,first_publish_year,cover_i,number_of_pages_median,subject,ratings_average,ratings_count,language'
+};
+
+/**
+ * Título/autor como aparecem na Open Library (acervo majoritariamente em
+ * inglês), quando diferem do original cadastrado.
+ */
+const OPEN_LIBRARY_LOOKUP_OVERRIDES = {
+  b18: { title: 'The Little Prince' },
+  b19: { title: 'One Hundred Years of Solitude' },
+  b22: { title: 'Crime and Punishment', author: 'Dostoyevsky' },
+  b25: { title: 'Don Quixote' },
+  b27: { title: 'The Metamorphosis' },
+  b29: { title: 'The Count of Monte Cristo' },
+  b35: { title: "Harry Potter and the Philosopher's Stone" }
+};
+
 /** Vitrines da aba Livros (rodízio a cada "carregar mais"). */
 const BOOK_FEEDS = [
   'subject:fiction',
@@ -88,8 +121,23 @@ const BOOK_FEEDS = [
   'subject:horror'
 ];
 
-/** Categorias do Google (em inglês, "Fiction / Fantasy / Epic") → rótulos do site. */
+/** Mesmas vitrines, no formato de assunto da Open Library. */
+const OPEN_LIBRARY_FEEDS = ['fiction', 'fantasy', 'thriller', 'romance', 'science_fiction', 'biography', 'history', 'horror'];
+
+/** Categorias do Google ("Fiction / Fantasy / Epic") e assuntos da Open Library → rótulos do site. */
 const BOOK_CATEGORY_MAP = {
+  'fantasy fiction': 'Fantasia',
+  'horror tales': 'Terror',
+  'horror stories': 'Terror',
+  'detective and mystery stories': 'Mistério',
+  'love stories': 'Romance',
+  'historical fiction': 'História',
+  'biography': 'Biografia',
+  'suspense fiction': 'Suspense',
+  'thrillers (fiction)': 'Suspense',
+  'adventure stories': 'Aventura',
+  'classic literature': 'Clássico',
+  'dystopias': 'Distopia',
   'fiction': 'Ficção',
   'fantasy': 'Fantasia',
   'epic': 'Fantasia',
@@ -149,8 +197,33 @@ class GoogleBooksService {
     }
   }
 
-  /** GET /books/v1{endpoint}. Devolve o JSON ou null. */
+  /** O Google recusou há pouco (cota esgotada / bloqueio)? Então nem tenta. */
+  isGoogleDown() {
+    if (this._googleDown) return true;
+    try {
+      const until = Number(localStorage.getItem('cinebook_gbooks_down_until') || 0);
+      if (until > Date.now()) {
+        this._googleDown = true;
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  markGoogleDown() {
+    this._googleDown = true;
+    try {
+      localStorage.setItem('cinebook_gbooks_down_until', String(Date.now() + GOOGLE_BOOKS_CONFIG.DOWN_COOLDOWN_MS));
+    } catch (_) {}
+  }
+
+  /**
+   * GET /books/v1{endpoint}. Devolve o JSON, ou null se não encontrou (404)
+   * ou se o Google está recusando — nesse caso isGoogleDown() fica true e
+   * quem chamou usa a Open Library.
+   */
   async request(endpoint, params = {}) {
+    if (this.isGoogleDown()) return null;
     const query = new URLSearchParams(params);
     if (GOOGLE_BOOKS_CONFIG.API_KEY) query.set('key', GOOGLE_BOOKS_CONFIG.API_KEY);
     const qs = query.toString();
@@ -169,19 +242,145 @@ class GoogleBooksService {
     }
 
     // 2) Proxy do próprio site (Netlify).
-    if (this._proxyOff) return null;
+    if (!this._proxyOff) {
+      try {
+        const res = await this.fetchWithTimeout(proxyUrl, 9000);
+        const isJson = (res.headers.get('content-type') || '').includes('json');
+        if (!isJson) {
+          this._proxyOff = true; // servidor sem proxy (ex.: rodando local)
+        } else if (res.ok) {
+          return await res.json();
+        } else if (res.status === 404) {
+          return null;
+        }
+      } catch (err) {
+        // segue para a Open Library
+      }
+    }
+
+    console.warn('[Google Books] indisponível (cota esgotada ou bloqueio) — usando a Open Library.');
+    this.markGoogleDown();
+    return null;
+  }
+
+  // -------------------------------------------------------------------------
+  // Open Library (reserva)
+  // -------------------------------------------------------------------------
+
+  async olRequest(path, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const suffix = `${path}${qs ? '?' + qs : ''}`;
     try {
-      const res = await this.fetchWithTimeout(proxyUrl, 9000);
-      const isJson = (res.headers.get('content-type') || '').includes('json');
-      if (!isJson) {
-        this._proxyOff = true; // servidor sem proxy (ex.: rodando local)
+      const res = await this.fetchWithTimeout(`${OPEN_LIBRARY_CONFIG.BASE_URL}${suffix}`, 12000);
+      return res.ok ? await res.json() : null;
+    } catch (_) {
+      // Rede bloqueou o acesso direto: tenta pelo proxy do site (Netlify).
+    }
+    if (this._olProxyOff) return null;
+    try {
+      const res = await this.fetchWithTimeout(`${OPEN_LIBRARY_CONFIG.PROXY_PATH}${suffix}`, 12000);
+      if (!(res.headers.get('content-type') || '').includes('json')) {
+        this._olProxyOff = true;
         return null;
       }
       return res.ok ? await res.json() : null;
     } catch (err) {
-      console.warn('[Google Books] Falha em', endpoint, err && err.message);
+      console.warn('[Open Library] Falha em', path, err && err.message);
       return null;
     }
+  }
+
+  olCover(coverId, size) {
+    return coverId ? `${OPEN_LIBRARY_CONFIG.COVERS_URL}/${coverId}-${size}.jpg?default=false` : '';
+  }
+
+  /** Descrição da Open Library: texto puro, sem os links em markdown. */
+  olDescription(desc) {
+    const txt = typeof desc === 'string' ? desc : (desc && desc.value) || '';
+    return txt
+      .replace(/\(\[source\]\[\d+\]\)/gi, '')
+      .replace(/\[([^\]]+)\]\[\d+\]/g, '$1')
+      .replace(/\[([^\]]+)\]\((?:https?:)?[^)]*\)/g, '$1')
+      .replace(/^\s*\[\d+\]:.*$/gm, '')
+      .replace(/-{3,}[\s\S]*$/, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  /** Documento de busca da Open Library → item do site. */
+  formatOLDoc(doc) {
+    const workId = String(doc.key || '').replace('/works/', '');
+    const authors = doc.author_name || [];
+    const title = doc.title || 'Sem título';
+    const rating = (doc.ratings_count || 0) > 0 && doc.ratings_average ? Math.round(doc.ratings_average * 20) : 0;
+    const year = doc.first_publish_year || '';
+    const releaseInfo = typeof computeReleaseStatus === 'function' && year
+      ? computeReleaseStatus(`${year}-01-01`, 'book')
+      : { releaseDateFull: year ? `${year}-01-01` : null, notReleasedYet: false };
+    const searchTerm = encodeURIComponent(`${title} ${authors[0] || ''}`.trim());
+    return {
+      id: `ol_${workId}`,
+      olKey: workId,
+      type: 'book',
+      title,
+      originalTitle: '',
+      year,
+      rating,
+      ratingsCount: doc.ratings_count || 0,
+      duration: doc.number_of_pages_median ? `${doc.number_of_pages_median} páginas` : '',
+      pageCount: doc.number_of_pages_median || 0,
+      director: authors.slice(0, 3).join(', '),
+      authors,
+      publisher: '',
+      genres: this.mapCategories((doc.subject || []).slice(0, 15)),
+      poster: this.olCover(doc.cover_i, 'M'),
+      posterLarge: this.olCover(doc.cover_i, 'L'),
+      backdrop: this.olCover(doc.cover_i, 'L'),
+      synopsis: '',
+      tagline: '',
+      sampleSnippet: '',
+      previewUrl: '',
+      cast: authors.slice(0, 3).map(name => ({ name, role: 'Autor(a)', photo: '' })),
+      whereToWatch: [
+        { name: 'Amazon', icon: '📦', type: 'Livro físico e Kindle', link: `https://www.amazon.com.br/s?k=${searchTerm}&i=stripbooks`, logo: null },
+        { name: 'Open Library', icon: '📚', type: 'Ficha da obra e empréstimo digital', link: `${OPEN_LIBRARY_CONFIG.BASE_URL}/works/${workId}`, logo: null }
+      ],
+      trailerUrl: '',
+      featured: false,
+      source: 'open_library',
+      releaseDateFull: releaseInfo.releaseDateFull,
+      notReleasedYet: releaseInfo.notReleasedYet,
+      inTheaters: false
+    };
+  }
+
+  /** q pode ser texto ("subject:fantasy language:por") ou { title, author }. */
+  async olSearch(q, { limit = GOOGLE_BOOKS_CONFIG.PAGE_SIZE, offset = 0, lang } = {}) {
+    const params = { ...(typeof q === 'string' ? { q } : q), fields: OPEN_LIBRARY_CONFIG.FIELDS, limit: String(limit), offset: String(offset) };
+    if (lang) params.lang = lang;
+    const data = await this.olRequest('/search.json', params);
+    if (!data || !Array.isArray(data.docs)) return null;
+    return this.dedupe(data.docs.map(d => this.formatOLDoc(d)));
+  }
+
+  /** Obra completa da Open Library (sinopse, capa, autores). */
+  async olGetWork(workId) {
+    const id = String(workId).replace(/^ol_/, '');
+    const [work, found] = await Promise.all([
+      this.olRequest(`/works/${encodeURIComponent(id)}.json`),
+      this.olSearch(`key:"/works/${id}"`, { limit: 1 })
+    ]);
+    if (!work && !(found && found.length)) return null;
+    const base = (found && found[0]) || this.formatOLDoc({ key: `/works/${id}`, title: work.title, cover_i: (work.covers || [])[0] });
+    if (work) {
+      if (!base.poster && work.covers && work.covers[0] > 0) {
+        base.poster = this.olCover(work.covers[0], 'M');
+        base.posterLarge = base.backdrop = this.olCover(work.covers[0], 'L');
+      }
+      base.synopsis = this.olDescription(work.description) || base.synopsis;
+      if (!base.genres.length) base.genres = this.mapCategories((work.subjects || []).slice(0, 15));
+    }
+    return base;
   }
 
   // -------------------------------------------------------------------------
@@ -232,11 +431,9 @@ class GoogleBooksService {
       ? (imageLinks.extraLarge || imageLinks.large || imageLinks.medium || imageLinks.small || imageLinks.thumbnail || imageLinks.smallThumbnail)
       : (imageLinks.thumbnail || imageLinks.smallThumbnail);
     if (!raw) return '';
-    let url = raw.replace(/^http:\/\//i, 'https://').replace(/&edge=curl/gi, '');
-    if (/books\.google/.test(url) && !/fife=/.test(url)) {
-      url += size === 'large' ? '&fife=w600-h900' : '&fife=w400-h600';
-    }
-    return url;
+    // Só troca para https e tira a "dobra de página". (Parâmetros extras de
+    // tamanho podem fazer o Google devolver a imagem "capa indisponível".)
+    return raw.replace(/^http:\/\//i, 'https://').replace(/&edge=curl/gi, '');
   }
 
   /** "2017" → "2017-01-01"; "2017-05" → "2017-05-01". */
@@ -375,46 +572,82 @@ class GoogleBooksService {
   // Consultas públicas
   // -------------------------------------------------------------------------
 
-  /** Busca livre (título, autor, ISBN...). */
+  /** Busca livre (título, autor, ISBN...). Google; se ele recusar, Open Library. */
   async search(query, startIndex = 0) {
     if (!query || !query.trim()) return [];
-    const cacheKey = `s:${this.normalize(query)}:${startIndex}`;
+    const q = query.trim();
+
+    if (!this.isGoogleDown()) {
+      const cacheKey = `s:${this.normalize(q)}:${startIndex}`;
+      const cached = this.cacheGet(cacheKey);
+      if (cached) return cached;
+      const data = await this.request('/volumes', {
+        q,
+        printType: 'books',
+        maxResults: String(GOOGLE_BOOKS_CONFIG.PAGE_SIZE),
+        startIndex: String(startIndex),
+        orderBy: 'relevance'
+      });
+      if (data) {
+        const items = Array.isArray(data.items) ? this.dedupe(data.items.map(v => this.formatVolume(v))) : [];
+        this.cacheSet(cacheKey, items);
+        return items;
+      }
+      if (!this.isGoogleDown()) return [];
+    }
+
+    // Reserva: Open Library. Converte a sintaxe do Google (intitle:, inauthor:,
+    // subject:) para a da Open Library (title:, author:, subject:).
+    const olQuery = q.replace(/\b(intitle|inauthor):/g, '');
+    const cacheKey = `os:${this.normalize(olQuery)}:${startIndex}`;
     const cached = this.cacheGet(cacheKey);
     if (cached) return cached;
-
-    const data = await this.request('/volumes', {
-      q: query.trim(),
-      printType: 'books',
-      maxResults: String(GOOGLE_BOOKS_CONFIG.PAGE_SIZE),
-      startIndex: String(startIndex),
-      orderBy: 'relevance'
-    });
-    if (!data || !Array.isArray(data.items)) return [];
-    const items = this.dedupe(data.items.map(v => this.formatVolume(v)));
-    this.cacheSet(cacheKey, items);
-    return items;
+    const items = await this.olSearch(olQuery, { offset: startIndex, lang: this.getLangRestrict() });
+    if (!items) return [];
+    const withCover = items.filter(i => i.poster);
+    this.cacheSet(cacheKey, withCover);
+    return withCover;
   }
 
   /** Próxima página da vitrine da aba Livros (rodízio de gêneros). */
   async nextFeedPage(reset = false) {
     if (reset) this._feedCursor = { feed: 0, start: 0 };
     const { feed, start } = this._feedCursor;
-    const q = BOOK_FEEDS[feed % BOOK_FEEDS.length];
     const lang = this.getLangRestrict();
-    const cacheKey = `f:${lang}:${q}:${start}`;
+    let items = null;
 
-    let items = this.cacheGet(cacheKey);
-    if (!items) {
-      const data = await this.request('/volumes', {
-        q,
-        langRestrict: lang,
-        printType: 'books',
-        orderBy: 'relevance',
-        maxResults: String(GOOGLE_BOOKS_CONFIG.PAGE_SIZE),
-        startIndex: String(start)
-      });
-      items = data && Array.isArray(data.items) ? this.dedupe(data.items.map(v => this.formatVolume(v))) : [];
-      if (items.length) this.cacheSet(cacheKey, items);
+    if (!this.isGoogleDown()) {
+      const q = BOOK_FEEDS[feed % BOOK_FEEDS.length];
+      const cacheKey = `f:${lang}:${q}:${start}`;
+      items = this.cacheGet(cacheKey) || null;
+      if (!items) {
+        const data = await this.request('/volumes', {
+          q,
+          langRestrict: lang,
+          printType: 'books',
+          orderBy: 'relevance',
+          maxResults: String(GOOGLE_BOOKS_CONFIG.PAGE_SIZE),
+          startIndex: String(start)
+        });
+        if (data) {
+          items = Array.isArray(data.items) ? this.dedupe(data.items.map(v => this.formatVolume(v))) : [];
+          if (items.length) this.cacheSet(cacheKey, items);
+        }
+      }
+    }
+
+    if (!items && this.isGoogleDown()) {
+      // Reserva: mesma vitrine na Open Library, priorizando obras com edição
+      // no idioma do site ("language:por" para português).
+      const subject = OPEN_LIBRARY_FEEDS[feed % OPEN_LIBRARY_FEEDS.length];
+      const langCode = { pt: 'por', en: 'eng', es: 'spa', fr: 'fre', ru: 'rus', zh: 'chi', ar: 'ara', hi: 'hin', bn: 'ben', ur: 'urd', id: 'ind' }[lang] || 'por';
+      const cacheKey = `of:${langCode}:${subject}:${start}`;
+      items = this.cacheGet(cacheKey) || null;
+      if (!items) {
+        const found = await this.olSearch(`subject:${subject} language:${langCode}`, { offset: start, lang });
+        items = found ? found.filter(i => i.poster) : [];
+        if (items.length) this.cacheSet(cacheKey, items);
+      }
     }
 
     // Avança o cursor: próxima vitrine; depois de passar por todas, próxima página.
@@ -422,12 +655,21 @@ class GoogleBooksService {
     this._feedCursor = nextFeed % BOOK_FEEDS.length === 0
       ? { feed: 0, start: start + GOOGLE_BOOKS_CONFIG.PAGE_SIZE }
       : { feed: nextFeed, start };
-    return items;
+    return items || [];
   }
 
-  /** Um volume pelo id do Google ("gb_xxxx" ou "xxxx"). */
+  /** Um livro pelo id: "gb_xxxx" (Google Books) ou "ol_OLxxxxW" (Open Library). */
   async getVolume(id) {
-    const volumeId = String(id).replace(/^gb_/, '');
+    const raw = String(id);
+    if (/^ol_/i.test(raw)) {
+      const cacheKey = `ow:${raw}`;
+      const cached = this.cacheGet(cacheKey);
+      if (cached) return cached;
+      const item = await this.olGetWork(raw);
+      if (item) this.cacheSet(cacheKey, item);
+      return item;
+    }
+    const volumeId = raw.replace(/^gb_/, '');
     const cacheKey = `v:${volumeId}`;
     const cached = this.cacheGet(cacheKey);
     if (cached) return cached;
@@ -461,29 +703,49 @@ class GoogleBooksService {
 
   /**
    * Completa um destaque local (b1...b40) com os dados do livro real.
-   * Devolve o item atualizado (ou o próprio item, se a API não responder).
+   * Google Books primeiro; se ele recusar, Open Library (capa, páginas, nota).
+   * Devolve o item atualizado (ou o próprio item, se nenhuma fonte responder).
    */
   async enrichLocalBook(item) {
     if (!item || item.type !== 'book') return item;
     const lookup = LOCAL_BOOK_LOOKUP[item.id];
     if (!lookup) return item;
 
-    const cacheKey = `l:${item.id}`;
-    let match = this.cacheGet(cacheKey);
-    if (match === undefined) {
-      const q = `intitle:"${lookup.title}" inauthor:${lookup.author}`;
-      let data = await this.request('/volumes', { q, langRestrict: 'pt', printType: 'books', maxResults: '15', orderBy: 'relevance' });
-      let items = data && Array.isArray(data.items) ? data.items.map(v => this.formatVolume(v)).filter(i => i.poster) : [];
-      match = this.pickBestMatch(items, lookup.title, lookup.author);
-      if (!match) {
-        data = await this.request('/volumes', { q, printType: 'books', maxResults: '15', orderBy: 'relevance' });
-        items = data && Array.isArray(data.items) ? data.items.map(v => this.formatVolume(v)).filter(i => i.poster) : [];
+    // 1) Google Books
+    if (!this.isGoogleDown()) {
+      const cacheKey = `l:${item.id}`;
+      let match = this.cacheGet(cacheKey);
+      if (match === undefined) {
+        const q = `intitle:"${lookup.title}" inauthor:${lookup.author}`;
+        let data = await this.request('/volumes', { q, langRestrict: 'pt', printType: 'books', maxResults: '15', orderBy: 'relevance' });
+        let items = data && Array.isArray(data.items) ? data.items.map(v => this.formatVolume(v)).filter(i => i.poster) : [];
         match = this.pickBestMatch(items, lookup.title, lookup.author);
+        if (!match && data) {
+          data = await this.request('/volumes', { q, printType: 'books', maxResults: '15', orderBy: 'relevance' });
+          items = data && Array.isArray(data.items) ? data.items.map(v => this.formatVolume(v)).filter(i => i.poster) : [];
+          match = this.pickBestMatch(items, lookup.title, lookup.author);
+        }
+        if (data) this.cacheSet(cacheKey, match || null);
       }
-      if (!data) return item; // API fora do ar: não grava "não achei" no cache
-      this.cacheSet(cacheKey, match || null);
+      if (match) return this.applyMatch(item, match, lookup);
+      if (!this.isGoogleDown()) return item;
     }
-    return this.applyMatch(item, match, lookup);
+
+    // 2) Open Library
+    const olCacheKey = `lo:${item.id}`;
+    let olMatch = this.cacheGet(olCacheKey);
+    if (olMatch === undefined) {
+      const over = OPEN_LIBRARY_LOOKUP_OVERRIDES[item.id] || {};
+      const title = over.title || lookup.original || lookup.title;
+      const author = over.author || lookup.author;
+      const found = await this.olSearch({ title, author }, { limit: 8 });
+      if (!found) return item; // Open Library fora do ar: tenta de novo na próxima visita
+      const wantedAuthor = this.normalize(author);
+      olMatch = found.find(d => d.poster && this.normalize(d.authors.join(' ')).includes(wantedAuthor)) ||
+                found.find(d => d.poster) || null;
+      this.cacheSet(olCacheKey, olMatch);
+    }
+    return this.applyOLMatch(item, olMatch, lookup);
   }
 
   applyMatch(item, match, lookup) {
@@ -522,6 +784,29 @@ class GoogleBooksService {
   }
 
   /**
+   * Dados da Open Library num destaque local: capa, páginas e nota. Título,
+   * sinopse e gêneros continuam os cadastrados (em português).
+   */
+  applyOLMatch(item, match, lookup) {
+    if (lookup && lookup.original) item.originalTitle = lookup.original;
+    if (!match) return item;
+    Object.assign(item, {
+      olKey: match.olKey,
+      year: (lookup && lookup.year) || match.year || item.year,
+      duration: match.duration || item.duration,
+      pageCount: match.pageCount || item.pageCount,
+      poster: match.poster,
+      posterLarge: match.posterLarge,
+      backdrop: match.posterLarge || match.poster,
+      whereToWatch: match.whereToWatch,
+      rating: match.rating || item.rating,
+      ratingsCount: match.ratingsCount,
+      _booksEnriched: true
+    });
+    return item;
+  }
+
+  /**
    * Aplica na hora (sem rede) o que já estiver guardado no navegador, para
    * que as capas reais apareçam desde o primeiro desenho da página.
    */
@@ -531,34 +816,55 @@ class GoogleBooksService {
       const lookup = LOCAL_BOOK_LOOKUP[item.id];
       if (!lookup) return;
       const match = this.cacheGet(`l:${item.id}`);
+      const olMatch = this.cacheGet(`lo:${item.id}`);
       if (match) this.applyMatch(item, match, lookup);
+      else if (olMatch) this.applyOLMatch(item, olMatch, lookup);
       else if (lookup.original) item.originalTitle = lookup.original;
     });
   }
 
-  /** Completa vários destaques locais com poucas requisições em paralelo. */
-  async enrichLocalBooks(list, concurrency = 4) {
+  /**
+   * Completa vários destaques locais com poucas requisições em paralelo.
+   * onProgress é chamado (no máximo a cada ~400 ms) conforme as capas chegam,
+   * para a tela ir se preenchendo em vez de esperar todas.
+   */
+  async enrichLocalBooks(list, concurrency = 3, onProgress) {
     const pending = (list || []).filter(i => i.type === 'book' && LOCAL_BOOK_LOOKUP[i.id] && !i._booksEnriched);
     let cursor = 0;
+    let lastNotify = 0;
+    let dirty = false;
+    const notify = (force) => {
+      if (!onProgress || !dirty) return;
+      const now = Date.now();
+      if (force || now - lastNotify > 400) {
+        lastNotify = now;
+        dirty = false;
+        try { onProgress(); } catch (_) {}
+      }
+    };
     const worker = async () => {
       while (cursor < pending.length) {
         const item = pending[cursor++];
-        try { await this.enrichLocalBook(item); } catch (_) {}
+        try {
+          await this.enrichLocalBook(item);
+          if (item._booksEnriched) { dirty = true; notify(false); }
+        } catch (_) {}
       }
     };
     await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, worker));
+    notify(true);
     return pending.filter(i => i._booksEnriched).length;
   }
 
   /** Livros parecidos (mesmo gênero ou mesmo autor) para "Recomendados". */
   async getSimilar(item, max = 4) {
-    const author = (item.authors || [])[0];
+    const author = (item.authors || [])[0] || (item.director || '').split(',')[0].trim();
     const genre = (item.genres || [])[0];
     const reverse = Object.entries(BOOK_CATEGORY_MAP).find(([, v]) => v === genre);
     const q = reverse ? `subject:"${reverse[0]}"` : (author ? `inauthor:"${author}"` : '');
     if (!q) return [];
     const results = await this.search(q);
-    return results.filter(r => r.gbId !== item.gbId && this.normalize(r.title) !== this.normalize(item.title)).slice(0, max);
+    return results.filter(r => (r.gbId ? r.gbId !== item.gbId : r.olKey !== item.olKey) && this.normalize(r.title) !== this.normalize(item.title)).slice(0, max);
   }
 }
 

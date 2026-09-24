@@ -62,6 +62,13 @@
   status = 200
   force = true
 
+# Open Library (fonte reserva dos livros quando o Google Books recusa).
+[[redirects]]
+  from = "/olib-api/*"
+  to = "https://openlibrary.org/:splat"
+  status = 200
+  force = true
+
 # ==============================================================================
 # Bloqueio de arquivos sensíveis
 # ==============================================================================
