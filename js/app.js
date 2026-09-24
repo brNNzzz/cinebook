@@ -1451,7 +1451,7 @@ function renderGrid() {
           alt="Pôster de ${item.title}" 
           class="poster-img"
           loading="lazy"
-          onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';"
+          onerror="this.onerror=null; this.src='${item.type === 'book' && typeof generateBookCover === 'function' ? generateBookCover(item.title, item.director) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80'}';"
         />
 
         ${item.notReleasedYet ? `
@@ -1506,9 +1506,11 @@ function renderGrid() {
   // Controle de visibilidade do Botão Carregar Mais
   const loadMoreContainer = document.getElementById('loadMoreContainer');
   if (loadMoreContainer) {
-    const isTmdbTab = AppState.activeTab === 'all' || AppState.activeTab === 'movie' || AppState.activeTab === 'series';
+    const isTmdbTab = ['all', 'movie', 'series', 'book'].includes(AppState.activeTab);
     const isSearching = AppState.searchQuery.trim().length > 0;
     loadMoreContainer.style.display = (isTmdbTab && !isSearching && items.length > 0) ? 'flex' : 'none';
+    const loadMoreTextEl = document.getElementById('loadMoreText');
+    if (loadMoreTextEl && !AppState.isLoadingMore) loadMoreTextEl.textContent = loadMoreLabel();
   }
 }
 
@@ -2364,7 +2366,7 @@ function initEventListeners() {
     renderGrid();
 
     clearTimeout(searchDebounce);
-    if (AppState.searchQuery.trim().length >= 2 && typeof TMDB !== 'undefined') {
+    if (AppState.searchQuery.trim().length >= 2 && (typeof TMDB !== 'undefined' || typeof GoogleBooks !== 'undefined')) {
       searchDebounce = setTimeout(async () => {
         if (AppState.activeTab === 'people') {
           const peopleResults = await TMDB.searchPeople(AppState.searchQuery);
@@ -2376,6 +2378,12 @@ function initEventListeners() {
             });
             renderGrid();
           }
+        } else if (AppState.activeTab === 'book') {
+          if (typeof GoogleBooks === 'undefined') return;
+          const queryAtRequest = AppState.searchQuery;
+          const bookResults = await GoogleBooks.search(queryAtRequest);
+          if (queryAtRequest !== AppState.searchQuery) return;
+          if (addBooksToMediaList(bookResults, queryAtRequest) > 0 || bookResults.length > 0) renderGrid();
         } else {
           const queryAtRequest = AppState.searchQuery;
           const tmdbResults = await TMDB.search(queryAtRequest);
@@ -2630,6 +2638,10 @@ function switchTab(tabName) {
  * Carrega dinamicamente filmes, séries ou pessoas em alta e populares do TMDb (Página 1)
  */
 async function loadTMDBTrendsForTab() {
+  if (AppState.activeTab === 'book') {
+    await loadBooksForTab();
+    return;
+  }
   if (typeof TMDB === 'undefined') return;
 
   try {
@@ -2677,6 +2689,61 @@ async function loadTMDBTrendsForTab() {
 }
 
 /**
+ * Aba Livros: completa os destaques locais com os livros reais (capa,
+ * sinopse, páginas, links) e traz a primeira vitrine do Google Books.
+ */
+async function loadBooksForTab() {
+  if (typeof GoogleBooks === 'undefined') return;
+  const refresh = () => {
+    if (AppState.activeTab !== 'book') return;
+    renderGrid();
+    HeroCarousel.updateItems();
+    HeroCarousel.renderDashes();
+    HeroCarousel.renderCurrentSlide();
+  };
+
+  try {
+    const [enrichedCount, feed] = await Promise.all([
+      GoogleBooks.enrichLocalBooks(AppState.mediaList.filter(m => m.type === 'book')),
+      GoogleBooks.nextFeedPage(true)
+    ]);
+    addBooksToMediaList(feed);
+    if (enrichedCount > 0 || (feed && feed.length > 0)) refresh();
+  } catch (err) {
+    console.warn('Erro ao buscar livros no Google Books:', err);
+  }
+}
+
+function loadMoreLabel() {
+  const tr = (key, fallback) => (typeof t === 'function' && t(key) !== key) ? t(key) : fallback;
+  if (AppState.activeTab === 'book') return tr('load_more_books', 'Carregar mais livros');
+  if (AppState.activeTab === 'series') return tr('load_more_series', 'Carregar mais séries');
+  if (AppState.activeTab === 'movie') return tr('load_more_movies', 'Carregar mais filmes');
+  return tr('load_more_titles', 'Carregar mais títulos');
+}
+
+/** Adiciona livros da API sem repetir o que já está na lista. */
+function addBooksToMediaList(books, searchQuery) {
+  if (!books || books.length === 0 || typeof GoogleBooks === 'undefined') return 0;
+  let added = 0;
+  books.forEach(book => {
+    const key = `${GoogleBooks.normalize(book.title)}|${GoogleBooks.normalize((book.authors || [])[0] || '')}`;
+    const existing = AppState.mediaList.find(m => m.type === 'book' && (
+      (m.gbId && m.gbId === book.gbId) || m.id === book.id ||
+      `${GoogleBooks.normalize(m.title)}|${GoogleBooks.normalize((m.authors || [m.director || ''])[0] || '')}` === key
+    ));
+    if (existing) {
+      if (searchQuery) existing._searchQuery = searchQuery;
+      return;
+    }
+    if (searchQuery) book._searchQuery = searchQuery;
+    AppState.mediaList.push(book);
+    added++;
+  });
+  return added;
+}
+
+/**
  * Inicializa a Rolagem Infinita Inteligente (Estilo Oficial TMDb)
  */
 function initInfiniteScroll() {
@@ -2688,7 +2755,7 @@ function initInfiniteScroll() {
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting && !AppState.isLoadingMore) {
-          const isTmdbTab = AppState.activeTab === 'all' || AppState.activeTab === 'movie' || AppState.activeTab === 'series' || AppState.activeTab === 'people';
+          const isTmdbTab = ['all', 'movie', 'series', 'people', 'book'].includes(AppState.activeTab);
           const isSearching = AppState.searchQuery.trim().length > 0;
           if (isTmdbTab && !isSearching) {
             loadMoreMedia(true);
@@ -2711,7 +2778,7 @@ function initInfiniteScroll() {
     if (now - lastScrollTime < 250 || AppState.isLoadingMore) return;
     lastScrollTime = now;
 
-    const isTmdbTab = AppState.activeTab === 'all' || AppState.activeTab === 'movie' || AppState.activeTab === 'series' || AppState.activeTab === 'people';
+    const isTmdbTab = ['all', 'movie', 'series', 'people', 'book'].includes(AppState.activeTab);
     const isSearching = AppState.searchQuery.trim().length > 0;
     if (!isTmdbTab || isSearching) return;
 
@@ -2727,7 +2794,12 @@ function initInfiniteScroll() {
  * Carrega a próxima página de filmes, séries ou pessoas do TMDb (Paginação Contínua & Rolagem Infinita)
  */
 async function loadMoreMedia(isAuto = false) {
-  if (AppState.isLoadingMore || typeof TMDB === 'undefined') return;
+  if (AppState.isLoadingMore) return;
+  if (AppState.activeTab === 'book') {
+    if (typeof GoogleBooks === 'undefined') return;
+  } else if (typeof TMDB === 'undefined') {
+    return;
+  }
   AppState.isLoadingMore = true;
 
   const btn = document.getElementById('loadMoreBtn');
@@ -2738,12 +2810,19 @@ async function loadMoreMedia(isAuto = false) {
   if (btn) btn.classList.add('loading');
   if (spinner) spinner.style.display = 'inline-block';
   if (icon) icon.style.display = 'none';
-  if (text) text.textContent = isAuto ? 'Carregando mais títulos automaticamente...' : 'Buscando mais títulos no TMDb...';
+  if (text) text.textContent = isAuto ? 'Carregando mais títulos automaticamente...' : 'Buscando mais títulos...';
 
   try {
     const currentLang = localStorage.getItem('cinebook_lang') || 'pt';
 
-    if (AppState.activeTab === 'people') {
+    if (AppState.activeTab === 'book') {
+      // Algumas vitrines podem vir só com livros repetidos: tenta até 3.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const nextBooks = await GoogleBooks.nextFeedPage();
+        if (addBooksToMediaList(nextBooks) > 0) break;
+      }
+      renderGrid();
+    } else if (AppState.activeTab === 'people') {
       AppState.tmdbPeoplePage = (AppState.tmdbPeoplePage || 1) + 1;
       const nextPeople = await TMDB.getPopularPeople(AppState.tmdbPeoplePage);
       if (nextPeople && nextPeople.length > 0) {
@@ -2788,6 +2867,6 @@ async function loadMoreMedia(isAuto = false) {
     if (btn) btn.classList.remove('loading');
     if (spinner) spinner.style.display = 'none';
     if (icon) icon.style.display = 'inline-block';
-    if (text) text.textContent = 'Carregar Mais Filmes & Séries';
+    if (text) text.textContent = loadMoreLabel();
   }
 }

@@ -19,7 +19,7 @@
  * ---------------------------------------------------------------------------
  */
 
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';
 
 const CACHE_SHELL = `cinebook-shell-${VERSION}`;
 const CACHE_STATIC = `cinebook-static-${VERSION}`;
@@ -49,6 +49,7 @@ const PAGE_CANDIDATES = [
   ['/login', '/login.html'],
   ['/cadastro', '/cadastro.html'],
   ['/perfil', '/perfil.html'],
+  ['/institucional', '/institucional.html'],
 ];
 
 /** Estáticos essenciais. Ausências são ignoradas silenciosamente. */
@@ -57,6 +58,7 @@ const STATIC_ASSETS = [
   '/js/i18n.js',
   '/js/data.js',
   '/js/tmdb.js',
+  '/js/books.js',
   '/js/app.js',
   '/js/details.js',
   '/js/pwa.js',
@@ -320,6 +322,22 @@ self.addEventListener('fetch', (event) => {
   // ---- API do TMDb: sempre tenta a rede primeiro ----
   if (host === 'api.themoviedb.org') {
     event.respondWith(networkFirst(request, CACHE_API, API_CACHE_LIMIT));
+    return;
+  }
+
+  // ---- API do Google Books: rede primeiro ----
+  if (host === 'www.googleapis.com' && url.pathname.startsWith('/books/')) {
+    event.respondWith(networkFirst(request, CACHE_API, API_CACHE_LIMIT));
+    return;
+  }
+  if (url.origin === self.location.origin && url.pathname.startsWith('/gbooks-api/')) {
+    event.respondWith(networkFirst(request, CACHE_API, API_CACHE_LIMIT));
+    return;
+  }
+
+  // ---- Capas de livros do Google ----
+  if (host === 'books.google.com' || host === 'books.googleusercontent.com') {
+    event.respondWith(cacheFirst(request, CACHE_IMG, IMG_CACHE_LIMIT));
     return;
   }
 

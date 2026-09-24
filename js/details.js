@@ -66,6 +66,17 @@ async function loadMediaDetails(mediaId) {
     }
   }
 
+  // 1.1 Livro do Google Books (id "gb_...") ou destaque local de livro
+  if (!item && /^gb_/i.test(idStr) && typeof GoogleBooks !== 'undefined') {
+    item = await GoogleBooks.getVolume(idStr);
+    if (!item) {
+      document.getElementById('detailsMainTitle').textContent = 'Livro não encontrado';
+      return;
+    }
+  } else if (item && item.type === 'book' && typeof GoogleBooks !== 'undefined') {
+    await GoogleBooks.enrichLocalBook(item);
+  }
+
   // 2. Se for TMDb ou não estiver na base local
   if (!item && typeof TMDB !== 'undefined') {
     const isTv = idStr.toLowerCase().includes('tv') || idStr.toLowerCase().includes('series') || idStr.startsWith('s_');
@@ -219,6 +230,7 @@ function getProviderDirectLink(providerName, itemTitle, fallbackLink = null, ite
  * Renderiza todo o DOM da página de detalhes
  */
 function renderDetailsUI(item, lang) {
+  const tr = (key, fallback) => (typeof t === 'function' && t(key) && t(key) !== key) ? t(key) : fallback;
   // Título da Aba do Navegador
   document.title = `${item.title} (${item.year}) • CineBook`;
 
@@ -337,7 +349,6 @@ function renderDetailsUI(item, lang) {
 
   // Avaliação do Público — obra não lançada não tem nota de público (ninguém
   // assistiu ainda). No lugar aparece a data de estreia.
-  const tr = (key, fallback) => (typeof t === 'function' && t(key) && t(key) !== key) ? t(key) : fallback;
   const scoreLabel = document.querySelector('.details-score-label');
   const scoreBadge = scoreCircle ? scoreCircle.closest('.score-badge') : null;
   if (item.notReleasedYet) {
@@ -386,14 +397,25 @@ function renderDetailsUI(item, lang) {
   const trailerTitle = document.getElementById('titleTrailer');
   const trailerContainer = document.getElementById('detailsTrailerContainer');
   if (item.type === 'book') {
-    if (trailerBlock) trailerBlock.style.display = '';
-    if (trailerTitle) trailerTitle.innerHTML = `<span>📑</span> ${typeof t === 'function' ? t('modal_sample') : 'Trecho de Leitura'}`;
-    if (trailerContainer) {
-      trailerContainer.innerHTML = `
-        <div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--color-book); font-style: italic; color: #cbd5e1; line-height: 1.8; font-size: 1.05rem;">
-          "${item.sampleSnippet || 'Um começo é a época de se tomar o maior cuidado para que os equilíbrios fiquem corretos...'}"
-        </div>
-      `;
+    // Livro: mostra o trecho real (quando a API devolve) e o botão de amostra
+    // grátis do Google Books. Sem nenhum dos dois, a seção some — nada de
+    // citação genérica inventada.
+    const escHtml = (txt) => String(txt || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const hasSnippet = !!(item.sampleSnippet && item.sampleSnippet.trim());
+    const hasPreview = !!item.previewUrl;
+    if (!hasSnippet && !hasPreview) {
+      if (trailerBlock) trailerBlock.style.display = 'none';
+      if (trailerContainer) trailerContainer.innerHTML = '';
+    } else {
+      if (trailerBlock) trailerBlock.style.display = '';
+      const sampleTitle = hasPreview ? tr('book_free_sample', 'Amostra grátis') : (typeof t === 'function' ? t('modal_sample') : 'Trecho de Leitura');
+      if (trailerTitle) trailerTitle.innerHTML = `<span>📑</span> ${sampleTitle}`;
+      if (trailerContainer) {
+        trailerContainer.innerHTML = `
+          ${hasSnippet ? `<div style="background: rgba(255,255,255,0.03); padding: 1.5rem; border-radius: var(--radius-md); border-left: 4px solid var(--color-book); font-style: italic; color: #cbd5e1; line-height: 1.8; font-size: 1.05rem;">“${escHtml(item.sampleSnippet)}”</div>` : ''}
+          ${hasPreview ? `<a class="book-preview-btn" href="${escHtml(item.previewUrl)}" target="_blank" rel="noopener noreferrer">📖 ${tr('book_read_sample', 'Ler as primeiras páginas no Google Books')} ↗</a>` : ''}
+        `;
+      }
     }
   } else if (item.trailerUrl) {
     if (trailerBlock) trailerBlock.style.display = '';
@@ -450,8 +472,8 @@ function renderDetailsUI(item, lang) {
   const castTitle = document.getElementById('titleCast');
   const castGrid = document.getElementById('detailsCastGrid');
   if (castTitle) {
-    castTitle.innerHTML = item.type === 'book' 
-      ? `<span>✍️</span> ${typeof t === 'function' ? t('modal_cast') : 'Autores & Equipe Editorial'}`
+    castTitle.innerHTML = item.type === 'book'
+      ? `<span>✍️</span> ${tr('details_authors_title', 'Autoria')}`
       : `<span>👥</span> ${typeof t === 'function' ? t('details_cast_title') : 'Elenco Principal & Produção'}`;
   }
   if (castGrid) {
@@ -467,13 +489,13 @@ function renderDetailsUI(item, lang) {
       card.setAttribute('role', 'button');
       card.setAttribute('title', `${person.name}`);
       
-      const photoSrc = person.photo && person.photo.trim() !== '' 
-        ? person.photo 
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+      const photoSrc = person.photo && person.photo.trim() !== ''
+        ? person.photo
+        : initialsAvatar(person.name);
       
       card.innerHTML = `
         <div class="cast-photo-wrapper">
-          <img src="${photoSrc}" alt="${person.name}" class="cast-photo" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';"/>
+          <img src="${photoSrc}" alt="${person.name}" class="cast-photo" onerror="this.onerror=null; this.src=initialsAvatar(this.alt);"/>
         </div>
         <div class="cast-name">${person.name}</div>
         <div class="cast-role">${person.role || 'Elenco'}</div>
@@ -526,8 +548,10 @@ function renderDetailsUI(item, lang) {
 
     if (item.whereToWatch && item.whereToWatch.length > 0) {
       item.whereToWatch.forEach(prov => {
-        const directUrl = getProviderDirectLink(prov.name, item.title, prov.link, item.type);
-        const logoUrl = getProviderLogo(prov.name, prov.logo);
+        const directUrl = item.type === 'book' && prov.link
+          ? prov.link
+          : getProviderDirectLink(prov.name, item.title, prov.link, item.type);
+        const logoUrl = item.type === 'book' ? (prov.logo || null) : getProviderLogo(prov.name, prov.logo);
         const actionLabel = item.type === 'book' 
           ? (typeof t === 'function' ? t('action_buy_read') : 'Comprar / Ler')
           : (prov.type?.includes('Aluguel') || prov.type?.includes('Rent')
@@ -542,17 +566,17 @@ function renderDetailsUI(item, lang) {
         card.setAttribute('title', `${actionLabel} ${item.title} no ${prov.name}`);
         card.innerHTML = `
           <div class="provider-logo-wrapper">
-            <img 
+            ${logoUrl ? `<img 
               src="${logoUrl}" 
               class="provider-logo-img" 
               alt="${prov.name}" 
               loading="lazy" 
               onerror="this.onerror=null; this.parentElement.innerHTML='${prov.icon || (item.type === 'book' ? '📖' : '📺')}';"
-            />
+            />` : `<span style="font-size: 1.35rem;">${prov.icon || '📖'}</span>`}
           </div>
           <div class="provider-info-wrap">
             <div class="provider-brand-name">${prov.name}</div>
-            <div class="provider-type-tag">${typeof t === 'function' ? t('action_available_online') : (prov.type || 'Disponível Online')}</div>
+            <div class="provider-type-tag">${item.type === 'book' && prov.type ? prov.type : (typeof t === 'function' ? t('action_available_online') : (prov.type || 'Disponível Online'))}</div>
           </div>
           <div class="provider-watch-btn">
             <span>${actionLabel}</span>
@@ -582,7 +606,9 @@ function renderDetailsUI(item, lang) {
   if (techLblDur) techLblDur.textContent = typeof t === 'function' ? t('tech_duration_format') : 'Duração / Formato';
 
   document.getElementById('techOriginalTitle').textContent = item.originalTitle || item.title || '-';
-  document.getElementById('techDirector').textContent = item.director || item.publisher || '-';
+  document.getElementById('techDirector').textContent = item.type === 'book'
+    ? ([item.director, item.publisher].filter(Boolean).join(' • ') || '-')
+    : (item.director || item.publisher || '-');
   document.getElementById('techReleaseYear').textContent = item.year || '-';
   document.getElementById('techStatus').textContent = item.notReleasedYet
     ? tr('tech_status_upcoming', 'Ainda não lançado')
@@ -1116,15 +1142,23 @@ function renderReviews(mediaId) {
 /**
  * Carrega recomendações inteligentes
  */
-function loadRecommendations(item) {
+async function loadRecommendations(item) {
   const container = document.getElementById('detailsRecsGrid');
   if (!container || typeof MEDIA_DATABASE === 'undefined') return;
 
   const currentL = localStorage.getItem('cinebook_lang') || 'pt';
 
-  const recs = MEDIA_DATABASE
+  let recs = MEDIA_DATABASE
     .filter(m => m.id !== item.id && m.type === item.type)
     .slice(0, 4);
+
+  // Livros: parecidos de verdade (mesmo gênero/autor) pelo Google Books.
+  if (item.type === 'book' && typeof GoogleBooks !== 'undefined') {
+    try {
+      const similar = await GoogleBooks.getSimilar(item, 4);
+      if (similar.length >= 2) recs = similar;
+    } catch (_) {}
+  }
 
   container.innerHTML = '';
   recs.forEach(rec => {
@@ -1141,7 +1175,7 @@ function loadRecommendations(item) {
     card.innerHTML = `
       <div class="poster-wrapper">
         <span class="poster-type-badge ${rec.type}">${rec.type}</span>
-        <img src="${rec.poster}" alt="${rec.title}" class="poster-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80';"/>
+        <img src="${rec.poster}" alt="${rec.title}" class="poster-img" loading="lazy" onerror="this.onerror=null; this.src='${rec.type === 'book' && typeof generateBookCover === 'function' ? generateBookCover(rec.title, rec.director) : 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=500&q=80'}';"/>
       </div>
       <div class="card-content" style="padding: 0.9rem;">
         <h4 class="card-title" style="font-size: 0.9rem;">${rec.title}</h4>
@@ -1254,4 +1288,16 @@ function initAuthUI() {
       window.location.reload();
     };
   }
+}
+
+
+/**
+ * Avatar com as iniciais do nome, para quem não tem foto cadastrada — em vez
+ * de uma foto de banco de imagens de uma pessoa qualquer.
+ */
+function initialsAvatar(name) {
+  const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+  const initials = ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1e293b"/><text x="100" y="118" text-anchor="middle" font-family="Arial, sans-serif" font-size="64" font-weight="700" fill="#1ed5a9">${initials.replace(/[<>&"]/g, '')}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 }

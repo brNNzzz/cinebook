@@ -54,6 +54,14 @@
   status = 200
   force = true
 
+# Mesmo esquema para o Google Books (reserva: o site tenta direto primeiro,
+# porque sem chave de API a cota do Google é contada por usuário).
+[[redirects]]
+  from = "/gbooks-api/*"
+  to = "https://www.googleapis.com/books/v1/:splat"
+  status = 200
+  force = true
+
 # ==============================================================================
 # Bloqueio de arquivos sensíveis
 # ==============================================================================

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sobre o CineBook, termos de uso, política de privacidade e fontes de dados.">
+  <title>Institucional • CineBook</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="assets/logo.png">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/i18n.js" defer></script>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#060d17">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CineBook">
+  <script src="js/pwa.js" defer></script>
+</head>
+<body class="legal-body">
+
+  <div class="details-page-wrapper">
+
+    <header class="cine-header">
+      <div class="cine-header-container">
+        <div class="cine-nav-left">
+          <a href="index.html" class="cine-logo" id="brandBtn" title="Ir para o Início">
+            <div class="cine-logo-icon">
+              <img src="assets/logo.png" alt="CINEBOOKS Logo" class="cine-logo-img">
+            </div>
+            <span class="cine-logo-text"><span class="logo-cine">CINE</span> <span class="logo-books">BOOKS</span></span>
+          </a>
+
+          <!-- Abas de Navegação Principal: Filmes, Séries, Livros e Pessoas -->
+          <nav class="cine-nav-links" aria-label="Navegação Principal">
+            <a href="index.html?tab=movie" class="cine-nav-item" data-tab="movie" id="tabMovies" data-i18n="nav_movies">
+              Filmes
+            </a>
+            <a href="index.html?tab=series" class="cine-nav-item" data-tab="series" id="tabSeries" data-i18n="nav_series">
+              Séries
+            </a>
+            <a href="index.html?tab=book" class="cine-nav-item" data-tab="book" id="tabBooks" data-i18n="nav_books">
+              Livros
+            </a>
+            <a href="index.html?tab=people" class="cine-nav-item" data-tab="people" id="tabPeople" data-i18n="nav_people">
+              Pessoas
+            </a>
+          </nav>
+        </div>
+
+        <!-- Ações do Usuário (Botão Catálogo + Seletor de Idioma + Entrar / Criar Conta ou Perfil) -->
+        <div class="user-nav-actions" id="userNavActions">
+          <!-- Botão Voltar ao Catálogo Compacto no Topo -->
+          <a href="index.html" class="btn-back-catalog-pill" id="btnBackCatalog" title="Voltar ao Catálogo">
+            <span>←</span> <span id="backCatalogText" data-i18n="btn_back_catalog">Voltar ao Catálogo</span>
+          </a>
+
+          <!-- Seletor de Idiomas Dropdown -->
+          <div class="lang-selector-container">
+            <div class="cine-lang-badge" id="langSelectorTrigger" title="Alterar Idioma">
+              <span id="currentLangFlag" class="lang-flag-box"><img src="https://flagcdn.com/w40/br.png" srcset="https://flagcdn.com/w80/br.png 2x" alt="Português" class="lang-flag-img"></span> <span id="currentLangText">PT</span> <span style="font-size: 0.65rem; opacity: 0.7;">▼</span>
+            </div>
+            <div class="lang-dropdown-menu" id="langDropdownMenu">
+              <!-- Preenchido via i18n.js -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </header>
+
+    <main class="legal-page">
+      <aside class="legal-toc" aria-label="Nesta página">
+        <p class="legal-toc-title">Nesta página</p>
+        <a href="#sobre">Sobre o CineBook</a>
+        <a href="#termos">Termos de uso</a>
+        <a href="#privacidade">Privacidade</a>
+        <a href="#fontes">Fontes de dados</a>
+      </aside>
+
+      <div class="legal-content">
+        <p class="legal-updated">Última atualização: setembro de 2026</p>
+
+        <section id="sobre" class="legal-section">
+          <h1>Sobre o CineBook</h1>
+          <p>O CineBook reúne filmes, séries e livros em um só catálogo. Você encontra sinopse, elenco ou autores, trailers, data de estreia e onde assistir, ler ou comprar, e ainda pode montar sua própria lista e publicar suas avaliações.</p>
+          <p>O catálogo é atualizado automaticamente a partir de bases públicas de referência (veja <a href="#fontes">Fontes de dados</a>) e está disponível em 11 idiomas. O CineBook também pode ser instalado como aplicativo no computador e no celular.</p>
+        </section>
+
+        <section id="termos" class="legal-section">
+          <h2>Termos de uso</h2>
+          <p>Ao usar o CineBook você concorda com estes termos.</p>
+          <h3>Uso do serviço</h3>
+          <p>O CineBook é oferecido para uso pessoal. Não é permitido usar o site para coletar dados em massa, sobrecarregar os serviços ou contornar qualquer mecanismo de segurança.</p>
+          <h3>Conteúdo de terceiros</h3>
+          <p>Sinopses, pôsteres, capas, fotos e trailers pertencem aos seus respectivos titulares e são exibidos a partir das fontes listadas em <a href="#fontes">Fontes de dados</a>. As informações podem mudar ou conter imprecisões vindas dessas fontes.</p>
+          <h3>Links para outros sites</h3>
+          <p>Os botões de streaming, lojas de livros e compra de ingressos levam para sites de terceiros. O CineBook não vende ingressos, livros nem assinaturas: qualquer compra acontece no site do parceiro, sob os termos e a política de privacidade dele.</p>
+          <h3>Avaliações publicadas</h3>
+          <p>Quem publica uma avaliação é responsável pelo que escreve. Conteúdo ofensivo, discriminatório, ilegal ou que revele dados pessoais de terceiros pode ser removido.</p>
+        </section>
+
+        <section id="privacidade" class="legal-section">
+          <h2>Privacidade</h2>
+          <h3>O que fica salvo no seu navegador</h3>
+          <p>Para funcionar, o CineBook guarda no próprio navegador (armazenamento local): o idioma escolhido, sua lista de filmes, séries e livros, as avaliações que você publica e os dados da conta criada no site (nome, e-mail e preferências de gênero). Nesta versão, essas informações ficam apenas no seu dispositivo e não são enviadas a um servidor do CineBook.</p>
+          <p>Também ficam em cache, por até 7 dias, respostas das bases de dados de filmes e livros, para o site carregar mais rápido e funcionar offline.</p>
+          <h3>Serviços de terceiros</h3>
+          <p>Ao navegar, seu navegador se conecta diretamente a serviços como TMDB (dados e imagens de filmes e séries), Google Books (dados e capas de livros), YouTube (trailers), Google Fonts (tipografia) e à hospedagem do site. Esses serviços recebem informações técnicas da conexão, como o endereço IP, conforme as políticas de privacidade de cada um.</p>
+          <h3>Como apagar seus dados</h3>
+          <p>Você pode sair da conta a qualquer momento pelo menu do perfil. Para apagar tudo, limpe os dados do site nas configurações do navegador (ou desinstale o aplicativo).</p>
+        </section>
+
+        <section id="fontes" class="legal-section">
+          <h2>Fontes de dados</h2>
+          <div class="legal-source">
+            <strong>TMDB (The Movie Database)</strong>
+            <p>Informações, imagens, elenco, trailers e disponibilidade em streaming de filmes e séries. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB. <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer">themoviedb.org ↗</a></p>
+          </div>
+          <div class="legal-source">
+            <strong>Google Books</strong>
+            <p>Capas, autores, editoras, sinopses, número de páginas, notas de leitores, amostras e links de compra de livros. <a href="https://books.google.com/" target="_blank" rel="noopener noreferrer">books.google.com ↗</a></p>
+          </div>
+          <div class="legal-source">
+            <strong>JustWatch (via TMDB)</strong>
+            <p>A lista de plataformas de "onde assistir" vem da parceria do TMDB com o JustWatch. <a href="https://www.justwatch.com/" target="_blank" rel="noopener noreferrer">justwatch.com ↗</a></p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="site-footer-inner">
+      <div class="site-footer-top">
+        <div class="site-footer-brand">
+          <a href="index.html" class="site-footer-logo" aria-label="CineBook — página inicial">
+            <img src="assets/logo.png" alt="" width="36" height="36">
+            <span>CineBook</span>
+          </a>
+          <p class="site-footer-tagline" data-i18n="footer_tagline">Filmes, séries e livros em um só lugar. Descubra o que assistir e ler, monte sua lista e compartilhe suas avaliações.</p>
+        </div>
+
+        <nav class="site-footer-cols" aria-label="Links do rodapé">
+          <div class="site-footer-col">
+            <h4 data-i18n="footer_col_explore">Explorar</h4>
+            <ul>
+              <li><a href="index.html?tab=movie" data-i18n="footer_link_movies">Filmes</a></li>
+              <li><a href="index.html?tab=series" data-i18n="footer_link_series">Séries</a></li>
+              <li><a href="index.html?tab=book" data-i18n="footer_link_books">Livros</a></li>
+              <li><a href="index.html?tab=people" data-i18n="footer_link_people">Pessoas</a></li>
+            </ul>
+          </div>
+          <div class="site-footer-col">
+            <h4 data-i18n="footer_col_account">Sua conta</h4>
+            <ul>
+              <li><a href="login.html" data-i18n="footer_link_login">Entrar</a></li>
+              <li><a href="cadastro.html" data-i18n="footer_link_signup">Criar conta</a></li>
+              <li><a href="perfil.html" data-i18n="footer_link_profile">Meu perfil</a></li>
+              <li><a href="index.html?tab=watchlist" data-i18n="footer_link_watchlist">Minha lista</a></li>
+            </ul>
+          </div>
+          <div class="site-footer-col">
+            <h4 data-i18n="footer_col_company">Institucional</h4>
+            <ul>
+              <li><a href="institucional.html#sobre" data-i18n="footer_link_about">Sobre o CineBook</a></li>
+              <li><a href="institucional.html#termos" data-i18n="footer_link_terms">Termos de uso</a></li>
+              <li><a href="institucional.html#privacidade" data-i18n="footer_link_privacy">Privacidade</a></li>
+              <li><a href="institucional.html#fontes" data-i18n="footer_link_sources">Fontes de dados</a></li>
+            </ul>
+          </div>
+        </nav>
+      </div>
+
+      <div class="site-footer-bottom">
+        <p class="site-footer-legal">© <span class="site-footer-year">2026</span> CineBook. <span data-i18n="footer_rights">Todos os direitos reservados.</span></p>
+        <div class="site-footer-attrib">
+          <p><a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" class="attrib-badge">TMDB</a> <span data-i18n="footer_attrib_tmdb">Dados de filmes e séries fornecidos pelo TMDB. Este produto usa a API do TMDB, mas não é endossado nem certificado pelo TMDB.</span></p>
+          <p><a href="https://books.google.com/" target="_blank" rel="noopener noreferrer" class="attrib-badge">Google Books</a> <span data-i18n="footer_attrib_books">Informações de livros fornecidas pelo Google Books.</span></p>
+        </div>
+      </div>
+    </div>
+  </footer>
+  <script>document.querySelectorAll('.site-footer-year').forEach(function (el) { el.textContent = new Date().getFullYear(); });</script>
+
+  </div>
+</body>
+</html>

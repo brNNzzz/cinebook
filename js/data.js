@@ -338,19 +338,6 @@ const MEDIA_TRANSLATIONS_CATALOG = {
     "ur": { "title": "اسٹرینجر تھنگز: فائنل سیزن", "synopsis": "ہاکنز اور اپ سائیڈ ڈاؤن کی تقدیر کے لیے آخری اور فیصلہ کن جنگ اپنے عروج پر پہنچتی ہے۔" },
     "id": { "title": "Stranger Things: Season Terakhir", "synopsis": "Pertempuran terakhir demi nasib Hawkins dan Upside Down mencapai puncaknya saat Eleven dan kawan-kawan menghadapi Vecna." }
   },
-  "b2": {
-    "pt": { "title": "1984", "synopsis": "Em uma sociedade totalitária sob a vigilância constante do Grande Irmão, Winston Smith desafia o Partido ao buscar a verdade e a liberdade individual." },
-    "en": { "title": "1984", "synopsis": "In a dystopian totalitarian society under the constant surveillance of Big Brother, Winston Smith dares to rebel in search of truth and human freedom." },
-    "es": { "title": "1984", "synopsis": "En una sociedad totalitaria vigilada por el Gran Hermano, Winston Smith desafía al Partido en busca de la verdad." },
-    "fr": { "title": "1984", "synopsis": "Dans un monde totalitaire surveillé par Big Brother, Winston Smith tente de préserver son humanité et sa liberté." },
-    "zh": { "title": "一九八四 (1984)", "synopsis": "在‘老大哥’全天候严密监控的极权反乌托邦社会中，温斯顿·史密斯勇敢反抗谎言与思维控制，追寻人性真理与个人自由。" },
-    "hi": { "title": "1984", "synopsis": "बिग ब्रदर की निगरानी वाले एक सर्वसत्तावादी समाज में, विंस्टन स्मिथ सच्चाई और स्वतंत्रता की तलाश में विद्रोह करता है।" },
-    "ar": { "title": "1984", "synopsis": "في مجتمع شمولي بائس تحت مراقبة 'الأخ الأكبر' المستمرة، يتجرأ ونستون سميث على التمرد بحثاً عن الحرية." },
-    "bn": { "title": "১৯৮৪", "synopsis": "বিগ ব্রাদারের নজরদারির অধীনে এক সর্বগ্রাসী সমাজে উইনস্টন স্মিথ সত্য ও স্বাধীনতার সন্ধানে বিদ্রোহ করে।" },
-    "ru": { "title": "1984", "synopsis": "В тоталитарном мире под неусыпным оком Старшего Брата Уинстон Смит решается бросить вызов системе ради правды и свободы." },
-    "ur": { "title": "1984", "synopsis": "بگ برادر کی مسلسل نگرانی میں ایک ظالمانہ معاشرے میں ونسٹن سمتھ آزادی کی تلاش میں بغاوت کرتا ہے۔" },
-    "id": { "title": "1984", "synopsis": "Di masyarakat totaliter di bawah pengawasan Big Brother, Winston Smith berani memberontak mencari kebenaran dan kebebasan." }
-  },
   "b3": {
     "pt": { "title": "O Senhor dos Anéis: A Sociedade do Anel", "synopsis": "Um jovem hobbit chamado Frodo Bolseiro herda um anel mágico ancestral e deve empreender uma jornada épica até a Montanha da Perdição para destruí-lo." },
     "en": { "title": "The Lord of the Rings: The Fellowship of the Ring", "synopsis": "Frodo Baggins embarks on a perilous quest across Middle-earth to destroy the One Ring before the Dark Lord Sauron can conquer the world." },
@@ -1534,7 +1521,7 @@ const MEDIA_DATABASE = [
     year: 2026,
     rating: 97,
     duration: "680 páginas",
-    director: "Frank Herbert, Brian Herbert",
+    director: "Frank Herbert",
     genres: ["Ficção Científica", "Hard Sci-Fi", "Aventura"],
     poster: "https://image.tmdb.org/t/p/w500/uzERcfV2rSHNhW5eViQiO9hNiA7.jpg",
     backdrop: "https://image.tmdb.org/t/p/original/h3HsfV8Kn9Sz2QWUYYdP5ya23hx.jpg",
