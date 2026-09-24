@@ -630,13 +630,46 @@ body {
   gap: 3.5rem;
   align-items: center;
   opacity: 1;
-  transform: translateY(0);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform: translateX(0);
+  transition: opacity 0.35s ease-out, transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
 }
 
-.hero-slide-main.slide-fading {
-  opacity: 0.25;
-  transform: translateY(4px);
+/* Carrossel: o slide atual sai por um lado e o próximo entra pelo outro */
+.hero-slide-main.slide-out-left {
+  opacity: 0;
+  transform: translateX(-120px);
+  transition: opacity 0.3s ease-in, transform 0.3s cubic-bezier(0.4, 0, 0.9, 0.6);
+}
+.hero-slide-main.slide-out-right {
+  opacity: 0;
+  transform: translateX(120px);
+  transition: opacity 0.3s ease-in, transform 0.3s cubic-bezier(0.4, 0, 0.9, 0.6);
+}
+.hero-slide-main.slide-in-right {
+  opacity: 0;
+  transform: translateX(120px);
+}
+.hero-slide-main.slide-in-left {
+  opacity: 0;
+  transform: translateX(-120px);
+}
+.hero-slide-main.no-transition {
+  transition: none !important;
+}
+
+.hero-carousel-backdrop {
+  transition: background-image 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+.hero-carousel-backdrop.backdrop-dim {
+  opacity: 0.35 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide-main,
+  .hero-carousel-backdrop {
+    transition: none !important;
+  }
 }
 
 .hero-poster-col {

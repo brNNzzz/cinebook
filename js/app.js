@@ -720,7 +720,66 @@ const HeroCarousel = {
     }
   },
 
-  renderCurrentSlide() {
+  /**
+   * Troca de slide. Com direção ('next' | 'prev') o slide atual desliza para
+   * fora de um lado e o novo entra pelo outro; sem direção (troca de idioma,
+   * lista atualizada) só atualiza o conteúdo, sem animação.
+   */
+  renderCurrentSlide(direction) {
+    const slideMain = document.getElementById('heroSlideMain');
+    const backdrop = document.getElementById('heroCarouselBackdrop');
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Cada troca ganha um número; se o usuário clicar de novo no meio da
+    // animação, a troca antiga é abandonada e só a mais recente termina.
+    const token = (this._slideToken = (this._slideToken || 0) + 1);
+    this.renderDashes(); // o tracinho ativo acompanha o clique na hora
+
+    if (!direction || !slideMain || reduceMotion || !this._hasRendered) {
+      if (slideMain) slideMain.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
+      if (backdrop) backdrop.classList.remove('backdrop-dim');
+      this.fillSlide();
+      this._hasRendered = true;
+      this.preloadNeighbors();
+      return;
+    }
+
+    const outClass = direction === 'next' ? 'slide-out-left' : 'slide-out-right';
+    const inClass = direction === 'next' ? 'slide-in-right' : 'slide-in-left';
+
+    slideMain.classList.remove('slide-out-left', 'slide-out-right', 'slide-in-left', 'slide-in-right');
+    // força o navegador a registrar o estado atual antes de animar
+    void slideMain.offsetWidth;
+    slideMain.classList.add(outClass);
+    if (backdrop) backdrop.classList.add('backdrop-dim');
+
+    setTimeout(() => {
+      if (token !== this._slideToken) return;
+      this.fillSlide();
+
+      // Posiciona o novo slide do outro lado, sem transição...
+      slideMain.classList.add('no-transition');
+      slideMain.classList.remove(outClass);
+      slideMain.classList.add(inClass);
+      void slideMain.offsetWidth;
+      // ...e desliza até o centro.
+      slideMain.classList.remove('no-transition');
+      slideMain.classList.remove(inClass);
+      if (backdrop) backdrop.classList.remove('backdrop-dim');
+      this.preloadNeighbors();
+    }, 300);
+  },
+
+  /** Baixa os pôsteres vizinhos antes, para não "piscar" ao entrar. */
+  preloadNeighbors() {
+    if (!this.items || this.items.length < 2) return;
+    const n = this.items.length;
+    [this.items[(this.currentIndex + 1) % n], this.items[(this.currentIndex - 1 + n) % n]].forEach(it => {
+      if (it && it.poster) { const img = new Image(); img.src = it.poster; }
+    });
+  },
+
+  fillSlide() {
     if (!this.items || this.items.length === 0) return;
     if (this.currentIndex >= this.items.length) this.currentIndex = 0;
     const item = this.items[this.currentIndex];
@@ -744,14 +803,6 @@ const HeroCarousel = {
     const detailsBtn = document.getElementById('heroDetailsBtn');
     const saveBtn = document.getElementById('heroWatchlistBtn');
     const posterFrame = document.getElementById('heroPosterFrame');
-
-    // Efeito de transição suave
-    if (slideMain) {
-      slideMain.classList.add('slide-fading');
-      setTimeout(() => {
-        if (slideMain) slideMain.classList.remove('slide-fading');
-      }, 150);
-    }
 
     // Backdrop & Pôster
     if (backdrop) backdrop.style.backgroundImage = `url('${item.backdrop || item.poster || ''}')`;
@@ -874,20 +925,21 @@ const HeroCarousel = {
   next() {
     if (!this.items || this.items.length === 0) return;
     this.currentIndex = (this.currentIndex + 1) % this.items.length;
-    this.renderCurrentSlide();
+    this.renderCurrentSlide('next');
   },
 
   prev() {
     if (!this.items || this.items.length === 0) return;
     this.currentIndex = (this.currentIndex - 1 + this.items.length) % this.items.length;
-    this.renderCurrentSlide();
+    this.renderCurrentSlide('prev');
   },
 
   goTo(idx) {
     if (!this.items || this.items.length === 0) return;
-    if (idx >= 0 && idx < this.items.length) {
+    if (idx >= 0 && idx < this.items.length && idx !== this.currentIndex) {
+      const direction = idx > this.currentIndex ? 'next' : 'prev';
       this.currentIndex = idx;
-      this.renderCurrentSlide();
+      this.renderCurrentSlide(direction);
     }
   },
 
