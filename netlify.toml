@@ -70,6 +70,15 @@
   force = true
 
 # ==============================================================================
+# Deploy automático pelo GitHub
+# ==============================================================================
+# O site é estático: não há etapa de build. Cada push na branch principal
+# publica a pasta raiz do repositório.
+[build]
+  publish = "."
+  command = ""
+
+# ==============================================================================
 # Bloqueio de arquivos sensíveis
 # ==============================================================================
 # O Netlify só serve arquivos estáticos — .py e .db não têm função nenhuma
@@ -110,6 +119,25 @@
 
 [[redirects]]
   from = "/test_perfil_server.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# Pastas do repositório que não fazem parte do site publicado.
+[[redirects]]
+  from = "/tests/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.github/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
   to = "/404.html"
   status = 404
   force = true

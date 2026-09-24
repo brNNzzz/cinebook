@@ -1,0 +1,20 @@
+# Dependências e saídas de teste
+node_modules/
+tests/screenshots/
+
+# Python
+__pycache__/
+*.pyc
+
+# Banco local do backend Python (é recriado sozinho pelo server.py e pode
+# conter e-mails e hashes de senha — nunca vai para o repositório)
+cinebook.db
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Netlify CLI
+.netlify/

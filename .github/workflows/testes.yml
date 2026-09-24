@@ -1,0 +1,40 @@
+# Roda os testes de navegador a cada push e pull request.
+# O resultado aparece na aba "Actions" do GitHub (✅ ou ❌ ao lado de cada commit).
+name: Testes
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Instalar dependências de teste
+        run: npm ci
+
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar os testes
+        run: npm test
+
+      - name: Guardar capturas de tela
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: capturas-de-tela
+          path: tests/screenshots
+          if-no-files-found: ignore

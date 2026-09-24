@@ -1,0 +1,12 @@
+{
+  "name": "cinebook-testes",
+  "private": true,
+  "description": "Testes de navegador (Playwright) do CineBook",
+  "scripts": {
+    "test": "node run-all.js",
+    "test:um": "node run-all.js"
+  },
+  "devDependencies": {
+    "playwright": "1.56.0"
+  }
+}
